@@ -116,15 +116,11 @@
 			fileRef = B2C3D4E5F6A7B8C9D0E1F2A3;
 		
 		}; /* ShareViewController.swift in Sources */
-		F6A7B8C9D0E1F2A3B4C5D6E7 = {
+		Z6A7B8C9D0E1F2A3B4C5D6E7F = {
 			isa = PBXBuildFile;
-			fileRef = A1B2C3D4E5F6A7B8C9D0E1F2A3;
+			fileRef = Z1B2C3D4E5F6A7B8C9D0E1F2A3;
 		
 		}; /* Assets.xcassets in Resources */
-		D5E6F7A8B9C0D1E2F3A4B5C6 = {
-			isa = PBXBuildFile;
-			fileRef = E6F7A8B9C0D1E2F3A4B5C6D7;
-		
 
 		F5BF48AA40CAD7891EB709FC = {
 			isa = PBXFileReference;
@@ -289,7 +285,7 @@
 			sourceTree = "<group>";
 		
 		}; /* Info.plist */
-		A1B2C3D4E5F6A7B8C9D0E1F2A3 = {
+		Z1B2C3D4E5F6A7B8C9D0E1F2A3 = {
 			isa = PBXFileReference;
 			lastKnownFileType = folder.assetcatalog;
 			path = Assets.xcassets;
@@ -317,11 +313,6 @@
 			sourceTree = "<group>";
 		
 		}; /* ShareExtension Info.plist */
-		E6F7A8B9C0D1E2F3A4B5C6D7 = {
-			isa = PBXFileReference;
-			lastKnownFileType = sourcecode.swift;
-			sourceTree = "<group>";
-		
 
 		4F6F5CC3FCCF73F75AE9CCF4 = {
 			isa = PBXFrameworksBuildPhase;
@@ -384,8 +375,7 @@
 							51F2B740A37D27FAB273081B,
 							DF9D95D8AAA6880C262B67BF,
 							1A2B3C4D5E6F7A8B9C0D1E2F,
-							E6F7A8B9C0D1E2F3A4B5C6D7,
-			);
+						);
 			path = Services;
 			sourceTree = "<group>";
 		
@@ -426,7 +416,7 @@
 			isa = PBXGroup;
 			children = (
 				B706E258FC3352EB1EB7194E,
-				A1B2C3D4E5F6A7B8C9D0E1F2A3,
+				Z1B2C3D4E5F6A7B8C9D0E1F2A3,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -504,7 +494,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F6A7B8C9D0E1F2A3B4C5D6E7 /* Assets.xcassets in Resources */,
+				Z6A7B8C9D0E1F2A3B4C5D6E7F /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		
