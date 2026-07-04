@@ -42,6 +42,12 @@
 		
 		};
 
+		ACD5C7E64BF5AF50AE79E892 /* LanguageDetector.swift in Sources */ = {
+			isa = PBXBuildFile;
+			fileRef = AE767185A460A5B10E3903F8 /* LanguageDetector.swift */;
+		
+		};
+
 		E69554A142DFDE312E8A54E8 /* NowPlayingService.swift in Sources */ = {
 			isa = PBXBuildFile;
 			fileRef = AF996F2721C427DC1CFE8803 /* NowPlayingService.swift */;
@@ -161,6 +167,14 @@
 			isa = PBXFileReference;
 			lastKnownFileType = sourcecode.swift;
 			path = AudioSessionService.swift;
+			sourceTree = "<group>";
+		
+		};
+
+		AE767185A460A5B10E3903F8 /* LanguageDetector.swift */ = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = LanguageDetector.swift;
 			sourceTree = "<group>";
 		
 		};
@@ -316,6 +330,7 @@
 			isa = PBXGroup;
 			children = (
 				AB96D7B260A7F7AE01CBF76A /* AudioSessionService.swift */,
+				AE767185A460A5B10E3903F8 /* LanguageDetector.swift */,
 				AF996F2721C427DC1CFE8803 /* NowPlayingService.swift */,
 				A50FA3D5817B693720E7C24A /* SpeechService.swift */,
 				DF9D95D8AAA6880C262B67BF /* TextExtractionService.swift */,
@@ -445,6 +460,7 @@
 				BFFF14D99BE365358D80FA0A /* PlaybackState.swift in Sources */,
 				A5F9774DA2884E0E2618AEBD /* VoiceConfig.swift in Sources */,
 				AE93C25917D659F4C7B4E091 /* AudioSessionService.swift in Sources */,
+				ACD5C7E64BF5AF50AE79E892 /* LanguageDetector.swift in Sources */,
 				E69554A142DFDE312E8A54E8 /* NowPlayingService.swift in Sources */,
 				F369DB20693DA0E82EBE1FF9 /* SpeechService.swift in Sources */,
 				E448FACB9627E10892C3E3B0 /* TextExtractionService.swift in Sources */,

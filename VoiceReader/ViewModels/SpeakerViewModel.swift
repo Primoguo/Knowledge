@@ -24,7 +24,15 @@ final class SpeakerViewModel: ObservableObject {
     func loadDocument(_ document: Document) {
         stop()
         currentDocument = document
-        voiceConfig = loadConfig()
+        let savedConfig = loadConfig()
+
+        // 自动检测文档语言并匹配语音
+        if !document.extractedText.isEmpty {
+            voiceConfig = LanguageDetector.detectAndApply(for: document.extractedText, currentConfig: savedConfig)
+        } else {
+            voiceConfig = savedConfig
+        }
+
         progress = document.progress
         currentPosition = document.currentPosition
         updatePositionText()
