@@ -1,4 +1,4 @@
-// VoiceReader/Services/LanguageDetector.swift
+// Knowledge/Services/LanguageDetector.swift
 import Foundation
 import AVFoundation
 

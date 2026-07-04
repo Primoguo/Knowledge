@@ -1,4 +1,4 @@
-// VoiceReader/Services/TextExtractionService.swift
+// Knowledge/Services/TextExtractionService.swift
 import Foundation
 import PDFKit
 import Vision
@@ -54,14 +54,16 @@ final class TextExtractionService {
 
     // MARK: - 网页文本提取
 
-    /// 从 URL 获取网页 HTML 并提取纯文本
+    /// 从 URL 获取网页 HTML 并提取纯文本（自动识别正文，过滤导航/广告/推荐）
     func extractFromWebPage(urlString: String) async throws -> (title: String, text: String) {
         guard let url = URL(string: urlString) else {
             throw ExtractionError.extractionFailed("无效的链接地址")
         }
 
         // 获取网页内容
-        let (data, response) = try await URLSession.shared.data(from: url)
+        var request = URLRequest(url: url)
+        request.setValue("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15", forHTTPHeaderField: "User-Agent")
+        let (data, response) = try await URLSession.shared.data(for: request)
 
         // 尝试从响应中获取编码
         var encoding: String.Encoding = .utf8
@@ -76,47 +78,210 @@ final class TextExtractionService {
             throw ExtractionError.extractionFailed("无法解析网页内容")
         }
 
-        // 提取标题
-        let title = extractTitle(from: htmlString) ?? url.host ?? urlString
+        // 提取标题（优先 og:title → <title> → 域名）
+        let title = extractMetaTag("og:title", from: htmlString)
+            ?? extractMetaTag("twitter:title", from: htmlString)
+            ?? extractTitle(from: htmlString)
+            ?? url.host
+            ?? urlString
 
-        // 提取正文：用 NSAttributedString 解析 HTML
-        let text: String
-        if let attributed = try? NSAttributedString(
-            data: data,
+        // 核心：先定位正文区域，再提取文本
+        let bodyHTML = extractBodyRegion(from: htmlString)
+
+        // 用 NSAttributedString 解析正文区域的 HTML
+        let rawText: String
+        if let bodyData = bodyHTML.data(using: .utf8),
+           let attributed = try? NSAttributedString(
+            data: bodyData,
             options: [.documentType: NSAttributedString.DocumentType.html,
-                      .characterEncoding: encoding.rawValue],
+                      .characterEncoding: String.Encoding.utf8.rawValue],
             documentAttributes: nil
-        ) {
-            text = attributed.string
+           ) {
+            rawText = attributed.string
         } else {
             // 回退：手动去除 HTML 标签
-            text = stripHTMLTags(htmlString)
+            rawText = stripHTMLTags(htmlString)
         }
 
-        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else {
-            throw ExtractionError.extractionFailed("网页中没有可提取的文本内容")
+        // 后处理：清洗文本，去除导航残留、短噪音行等
+        let cleaned = cleanExtractedText(rawText)
+
+        guard !cleaned.isEmpty else {
+            throw ExtractionError.extractionFailed("网页中没有可提取的正文内容")
         }
 
-        return (title, trimmed)
+        return (title, cleaned)
     }
 
     /// 从 HTML 中提取 <title> 标签内容
     private func extractTitle(from html: String) -> String? {
         guard let titleStart = html.range(of: "<title>", options: .caseInsensitive),
               let titleEnd = html.range(of: "</title>", options: .caseInsensitive) else {
-            // 尝试 og:title meta
-            if let ogStart = html.range(of: #"property="og:title" content=""#, options: .caseInsensitive) {
-                let after = html[ogStart.upperBound...]
-                if let ogEnd = after.range(of: "\"") {
-                    return String(after[..<ogEnd.lowerBound])
-                }
-            }
             return nil
         }
         let title = String(html[titleStart.upperBound..<titleEnd.lowerBound])
             .trimmingCharacters(in: .whitespacesAndNewlines)
         return title.isEmpty ? nil : title
+    }
+
+    /// 提取 meta 标签内容（如 og:title、description 等）
+    private func extractMetaTag(_ property: String, from html: String) -> String? {
+        let patterns = [
+            #"property="\#(property)"\s+content="([^"]*)""#,
+            #"name="\#(property)"\s+content="([^"]*)""#,
+        ]
+        for pattern in patterns {
+            if let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive),
+               let match = regex.firstMatch(in: html, range: NSRange(html.startIndex..., in: html)),
+               let range = Range(match.range(at: 1), in: html) {
+                let value = String(html[range]).trimmingCharacters(in: .whitespacesAndNewlines)
+                if !value.isEmpty { return value }
+            }
+        }
+        return nil
+    }
+
+    /// 从 HTML 中提取正文区域
+    /// 策略：优先找 <article> → 常见正文 class/id → 回退到 <body>
+    private func extractBodyRegion(from html: String) -> String {
+        // 1. 先去除明确无关的区域（head、script、style、nav、footer、header、aside）
+        var cleaned = html
+        let removeTags = ["script", "style", "noscript", "head", "nav", "footer", "header", "aside", "iframe", "form", "button"]
+        for tag in removeTags {
+            cleaned = cleaned.replacingOccurrences(of: "<\(tag)[^>]*>[\\s\\S]*?</\(tag)>",
+                                                    with: "", options: [.regularExpression, .caseInsensitive])
+        }
+        // 去除 HTML 注释
+        cleaned = cleaned.replacingOccurrences(of: "<!--[\\s\\S]*?-->", with: "", options: .regularExpression)
+
+        // 2. 优先匹配 <article> 标签
+        if let articleRange = findTagContent(tag: "article", in: cleaned) {
+            return String(cleaned[articleRange])
+        }
+
+        // 3. 匹配常见正文容器 class/id
+        let contentSelectors = [
+            #"class="[^"]*(?:article-content|article_body|article-detail|rich_media_content|post-content|entry-content|content-article|detail-content|article-text|news-content|story-body|main-content|post-body|article__content)[^"]*""#,
+            #"id="[^"]*(?:article-content|article_body|content|main-content|post-content|entry-content|detail|article)[^"]*""#,
+        ]
+
+        for selectorPattern in contentSelectors {
+            if let regex = try? NSRegularExpression(pattern: selectorPattern, options: .caseInsensitive),
+               let match = regex.firstMatch(in: cleaned, range: NSRange(cleaned.startIndex..., in: cleaned)) {
+                // 找到包含该 class/id 的标签，提取其内容
+                let matchPos = match.range.location
+                // 向前找最近的 <div 或 <section 标签
+                let before = String(cleaned.prefix(matchPos))
+                if let tagStart = findLastTagOpen(in: before) {
+                    let after = String(cleaned[tagStart...])
+                    // 找到对应的闭合标签
+                    if let tagContent = extractTagContent(from: after) {
+                        return tagContent
+                    }
+                }
+            }
+        }
+
+        // 4. 回退：尝试提取 <body> 内容（但已经去掉了 nav/footer/header/aside）
+        if let bodyRange = findTagContent(tag: "body", in: cleaned) {
+            return String(cleaned[bodyRange])
+        }
+
+        // 5. 最终回退：返回清洗后的全部 HTML
+        return cleaned
+    }
+
+    /// 找到指定 HTML 标签的内容（不含标签本身）
+    private func findTagContent(tag: String, in html: String) -> Range<String.Index>? {
+        guard let openRange = html.range(of: "<\(tag)[^>]*>", options: .regularExpression) else { return nil }
+        let afterOpen = openRange.upperBound
+        let remaining = html[afterOpen...]
+
+        // 简单匹配：找 </tag>
+        guard let closeRange = remaining.range(of: "</\(tag)>", options: .caseInsensitive) else {
+            return afterOpen..<html.endIndex
+        }
+        return afterOpen..<closeRange.lowerBound
+    }
+
+    /// 在字符串末尾附近找最后一个打开的标签位置
+    private func findLastTagOpen(in html: String) -> String.Index? {
+        guard let lastDiv = html.range(of: "<div[^>]*>", options: [.regularExpression, .backwards]) else {
+            return html.range(of: "<section[^>]*>", options: [.regularExpression, .backwards])?.lowerBound
+        }
+        return lastDiv.lowerBound
+    }
+
+    /// 从标签内容中提取完整闭合区域（简单括号计数）
+    private func extractTagContent(from html: String) -> String? {
+        let tagPattern = #"<(\w+)[^>]*>"#
+        guard let firstMatch = try? NSRegularExpression(pattern: tagPattern).firstMatch(in: html, range: NSRange(html.startIndex..., in: html)),
+              let tagRange = Range(firstMatch.range(at: 1), in: html) else { return nil }
+        let tagName = String(html[tagRange])
+
+        var depth = 0
+        let tagOpenPattern = try? NSRegularExpression(pattern: "<\(tagName)[\\s>]")
+        let tagClosePattern = try? NSRegularExpression(pattern: "</\(tagName)>")
+
+        var searchRange = NSRange(html.startIndex..., in: html)
+        while let openMatch = tagOpenPattern?.firstMatch(in: html, range: searchRange) {
+            if let closeMatch = tagClosePattern?.firstMatch(in: html, range: NSRange(openMatch.range.location..<html.utf16.count)) {
+                depth += 1
+                if depth == 1 {
+                    // 跳过这个打开标签
+                    let afterOpen = html.index(html.startIndex, offsetBy: openMatch.range.upperBound)
+                    let beforeClose = html.index(html.startIndex, offsetBy: closeMatch.range.lowerBound)
+                    return String(html[afterOpen..<beforeClose])
+                }
+                searchRange.location = closeMatch.range.upperBound
+            } else {
+                break
+            }
+        }
+        return nil
+    }
+
+    /// 清洗提取后的文本：去除导航残留、短噪音行、多余空行
+    private func cleanExtractedText(_ text: String) -> String {
+        var lines = text.components(separatedBy: "\n")
+
+        // 过滤规则
+        let noisePatterns: [String] = [
+            "首页", "资讯", "图表", "快讯", "行情", "日历", "VIP", "会员",
+            "登录", "注册", "扫码", "分享", "打开APP", "下载APP",
+            "大家都在搜", "热门搜索", "相关阅读", "推荐阅读",
+            "风险提示", "免责声明", "免责条款", "市场有风险",
+            "广告", "推广", "赞助",
+            "上一篇", "下一篇", "返回首页", "回到顶部",
+            "评论", "点赞", "收藏", "转发",
+            "©", "Copyright", "All Rights Reserved",
+        ]
+
+        lines = lines.filter { line in
+            let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
+            // 跳过空行（后续统一处理）
+            if trimmed.isEmpty { return true }
+            // 跳过纯数字/符号行（页码、分隔线等）
+            if trimmed.range(of: #"^[\d\s\-_=*#~\.·•|/\\]+$"#, options: .regularExpression) != nil {
+                return trimmed.count > 5  // 保留长数字行（可能是数据）
+            }
+            // 跳过噪声匹配行
+            for pattern in noisePatterns {
+                if trimmed.contains(pattern) {
+                    return false
+                }
+            }
+            // 跳过 URL
+            if trimmed.hasPrefix("http://") || trimmed.hasPrefix("https://") {
+                return false
+            }
+            return true
+        }
+
+        // 合并连续空行
+        let cleaned = lines.joined(separator: "\n")
+        let result = cleaned.replacingOccurrences(of: "\n{3,}", with: "\n\n", options: .regularExpression)
+        return result.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     /// 手动去除 HTML 标签

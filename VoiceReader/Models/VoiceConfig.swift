@@ -1,22 +1,19 @@
-// VoiceReader/Models/VoiceConfig.swift
+// Knowledge/Models/VoiceConfig.swift
 import Foundation
 
 /// 语音合成引擎类型
 enum TTSEngine: String, Codable, CaseIterable {
     case system = "system"
-    case edge = "edge"
 
     var displayName: String {
         switch self {
         case .system: return "系统 TTS"
-        case .edge:   return "Edge TTS（推荐）"
         }
     }
 
     var description: String {
         switch self {
         case .system: return "iOS 系统内置语音，离线可用"
-        case .edge:   return "微软 AI 语音，更自然流畅，需联网"
         }
     }
 }
@@ -33,7 +30,7 @@ struct VoiceConfig: Equatable, Codable {
 
     static let defaultConfig = VoiceConfig()
 
-    /// 常用语速档位（Edge TTS 使用平缓映射，系统 TTS 线性映射）
+    /// 常用语速档位
     static let speedPresets: [(label: String, value: Float)] = [
         ("0.7x", 0.35),
         ("0.85x", 0.425),

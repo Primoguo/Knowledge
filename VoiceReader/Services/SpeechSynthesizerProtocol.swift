@@ -1,4 +1,4 @@
-// VoiceReader/Services/SpeechSynthesizerProtocol.swift
+// Knowledge/Services/SpeechSynthesizerProtocol.swift
 import Foundation
 
 /// 语音合成引擎抽象协议，方便单元测试 mock

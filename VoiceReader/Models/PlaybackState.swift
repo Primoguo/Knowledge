@@ -1,4 +1,4 @@
-// VoiceReader/Models/PlaybackState.swift
+// Knowledge/Models/PlaybackState.swift
 
 enum PlaybackState: Equatable {
     case idle

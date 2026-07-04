@@ -1,4 +1,4 @@
-// VoiceReader/Views/PlayerView.swift
+// Knowledge/Views/PlayerView.swift
 import SwiftUI
 
 struct PlayerView: View {

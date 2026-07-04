@@ -1,4 +1,4 @@
-// VoiceReader/Services/NowPlayingService.swift
+// Knowledge/Services/NowPlayingService.swift
 import MediaPlayer
 
 final class NowPlayingService {

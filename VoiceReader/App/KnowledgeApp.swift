@@ -1,9 +1,9 @@
-// VoiceReader/App/VoiceReaderApp.swift
+// Knowledge/App/KnowledgeApp.swift
 import SwiftUI
 import SwiftData
 
 @main
-struct VoiceReaderApp: App {
+struct KnowledgeApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
     var sharedModelContainer: ModelContainer = {

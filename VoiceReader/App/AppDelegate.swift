@@ -1,4 +1,4 @@
-// VoiceReader/App/AppDelegate.swift
+// Knowledge/App/AppDelegate.swift
 import UIKit
 
 final class AppDelegate: NSObject, UIApplicationDelegate {

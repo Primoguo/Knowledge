@@ -1,4 +1,4 @@
-// VoiceReader/Services/ShareExtensionHandler.swift
+// Knowledge/Services/ShareExtensionHandler.swift
 import Foundation
 
 /// 处理从 Share Extension 传入的分享内容

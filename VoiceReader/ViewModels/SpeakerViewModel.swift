@@ -1,4 +1,4 @@
-// VoiceReader/ViewModels/SpeakerViewModel.swift
+// Knowledge/ViewModels/SpeakerViewModel.swift
 import Foundation
 import Combine
 
@@ -16,8 +16,6 @@ final class SpeakerViewModel: ObservableObject {
     @Published var voiceConfig: VoiceConfig = .defaultConfig
     /// 当前朗读的字符范围（全文绝对位置），用于 UI 高亮
     @Published var highlightRange: NSRange = NSRange(location: 0, length: 0)
-    /// TTS 引擎降级提示信息（nil 表示无降级）
-    @Published var engineFallbackMessage: String?
 
     // MARK: - Dependencies（可注入，方便测试）
 
@@ -26,9 +24,8 @@ final class SpeakerViewModel: ObservableObject {
     private let audioSession: AudioSessionService
     private let errorHandler: ErrorHandler
 
-    // 持有两个引擎实例
+    // 持有引擎实例
     private let systemSynthesizer = SpeechService()
-    private let edgeSynthesizer = EdgeTTSService()
 
     // MARK: - Internal State
 
@@ -52,27 +49,10 @@ final class SpeakerViewModel: ObservableObject {
 
     /// 根据配置切换语音引擎
     func switchEngine(to engine: TTSEngine) {
-        let wasPlaying = state == .playing
-        let currentPos = currentPosition
-        let currentDoc = currentDocument
-
-        // 停止当前引擎
-        synthesizer.stop()
-
-        // 切换引擎
-        let newEngine: SpeechSynthesizerProtocol = engine == .edge ? edgeSynthesizer : systemSynthesizer
-        synthesizer = newEngine
-
-        // 重新绑定回调
+        // 当前仅支持系统 TTS，引擎切换为预留接口
+        // 后续接入阿里云 CosyVoice 时将在此处添加新引擎
+        synthesizer = systemSynthesizer
         setupBindings()
-
-        // 如果之前在播放，恢复播放
-        if wasPlaying, let doc = currentDoc {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
-                guard let self else { return }
-                self.synthesizer.speak(text: doc.extractedText, from: currentPos, config: self.voiceConfig)
-            }
-        }
     }
 
     // MARK: - Document Loading
@@ -188,39 +168,12 @@ final class SpeakerViewModel: ObservableObject {
             }
         }
 
-        // 引擎错误 → 自动降级到系统 TTS
+        // 引擎错误处理
         synthesizer.onError = { [weak self] error in
             Task { @MainActor in
                 guard let self else { return }
-                // 只有 Edge 引擎才需要降级
-                guard self.synthesizer is EdgeTTSService else { return }
-
-                print("🔄 Edge TTS 失败，自动降级到系统 TTS: \(error.localizedDescription)")
-
-                let wasPlaying = self.state == .playing
-                let currentPos = self.currentPosition
-                let currentDoc = self.currentDocument
-
-                // 切换到系统引擎
-                self.synthesizer.stop()
-                self.synthesizer = self.systemSynthesizer
-                self.setupBindings()
-
-                // 更新配置为系统引擎并持久化
-                var config = self.voiceConfig
-                config.engine = .system
-                self.voiceConfig = config
-                self.saveConfig(config)
-
-                // 显示降级提示
-                self.engineFallbackMessage = "Edge TTS 暂时不可用，已自动切换到系统 TTS"
-
-                // 如果之前在播放，用系统引擎恢复
-                if wasPlaying, let doc = currentDoc {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                        self.synthesizer.speak(text: doc.extractedText, from: currentPos, config: config)
-                    }
-                }
+                print("🔊 TTS 引擎错误: \(error.localizedDescription)")
+                // 后续接入阿里云 CosyVoice 时，可在此处实现降级逻辑
             }
         }
 
@@ -280,11 +233,6 @@ final class SpeakerViewModel: ObservableObject {
     private func loadConfig() -> VoiceConfig {
         guard let data = UserDefaults.standard.data(forKey: "voiceConfig"),
               let c = try? JSONDecoder().decode(VoiceConfig.self, from: data) else { return .defaultConfig }
-        // 如果配置中使用了 Edge 引擎，切换到 Edge
-        if c.engine == .edge && synthesizer is SpeechService {
-            synthesizer = edgeSynthesizer
-            setupBindings()
-        }
         return c
     }
 

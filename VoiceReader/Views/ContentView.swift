@@ -1,4 +1,4 @@
-// VoiceReader/Views/ContentView.swift
+// Knowledge/Views/ContentView.swift
 import SwiftUI
 import SwiftData
 

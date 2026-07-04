@@ -1,4 +1,4 @@
-// VoiceReader/Views/DocumentRowView.swift
+// Knowledge/Views/DocumentRowView.swift
 import SwiftUI
 
 struct DocumentRowView: View {

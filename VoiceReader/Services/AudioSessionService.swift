@@ -1,4 +1,4 @@
-// VoiceReader/Services/AudioSessionService.swift
+// Knowledge/Services/AudioSessionService.swift
 import AVFoundation
 
 /// 统一管理 AVAudioSession 的配置、激活和停用

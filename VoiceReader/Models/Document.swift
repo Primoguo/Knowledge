@@ -1,4 +1,4 @@
-// VoiceReader/Models/Document.swift
+// Knowledge/Models/Document.swift
 import Foundation
 import SwiftData
 

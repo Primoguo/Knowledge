@@ -1,4 +1,4 @@
-// VoiceReader/Views/SettingsView.swift
+// Knowledge/Views/SettingsView.swift
 import SwiftUI
 import AVFoundation
 
@@ -10,7 +10,6 @@ struct SettingsView: View {
     @State private var selectedLang = "zh-CN"
     @State private var voices: [AVSpeechSynthesisVoice] = []
     @State private var selectedVoice: String? = nil
-    @State private var selectedEngine: TTSEngine = .system
 
     private let langs = [("zh-CN", "中文（普通话）"), ("zh-HK", "中文（粤语）"), ("en-US", "English (US)"), ("en-GB", "English (UK)"), ("ja-JP", "日本語"), ("ko-KR", "한국어")]
 
@@ -18,40 +17,16 @@ struct SettingsView: View {
         NavigationStack {
             Form {
                 Section("语音引擎") {
-                    Picker("引擎", selection: $selectedEngine) {
-                        ForEach(TTSEngine.allCases, id: \.self) { engine in
-                            VStack(alignment: .leading) {
-                                Text(engine.displayName)
-                                Text(engine.description)
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                            }.tag(engine)
+                    HStack {
+                        VStack(alignment: .leading) {
+                            Text("系统 TTS")
+                            Text("iOS 系统内置语音，离线可用")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
                         }
-                    }
-                    .pickerStyle(.menu)
-                    .onChange(of: selectedEngine) {
-                        speakerVM.switchEngine(to: selectedEngine)
-                        var config = speakerVM.voiceConfig
-                        config.engine = selectedEngine
-                        speakerVM.voiceConfig = config
-                        saveConfig()
-                    }
-                    // Edge TTS 降级提示
-                    if let msg = speakerVM.engineFallbackMessage {
-                        HStack {
-                            Image(systemName: "exclamationmark.triangle.fill")
-                                .foregroundColor(.orange).font(.caption)
-                            Text(msg)
-                                .font(.caption).foregroundColor(.orange)
-                        }
-                        .onAppear {
-                            // 同步 UI 状态
-                            selectedEngine = .system
-                            // 3 秒后自动清除提示
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-                                speakerVM.engineFallbackMessage = nil
-                            }
-                        }
+                        Spacer()
+                        Image(systemName: "checkmark")
+                            .foregroundColor(.blue)
                     }
                 }
 
@@ -104,13 +79,6 @@ struct SettingsView: View {
                             ForEach(voices, id: \.identifier) { v in Text(v.name).tag(v.identifier as String?) }
                         }.onChange(of: selectedVoice) { apply() }
                     }
-                    if selectedEngine == .edge {
-                        HStack {
-                            Image(systemName: "info.circle.fill").foregroundColor(.blue).font(.caption)
-                            Text("Edge TTS 使用微软 AI 语音，需要联网")
-                                .font(.caption).foregroundColor(.secondary)
-                        }
-                    }
                 }
                 Section("关于") {
                     HStack { Text("版本"); Spacer(); Text("1.2.0").foregroundColor(.secondary) }
@@ -121,7 +89,6 @@ struct SettingsView: View {
                 let c = speakerVM.voiceConfig
                 rate = Double(c.rate); pitch = Double(c.pitchMultiplier); volume = Double(c.volume)
                 selectedLang = c.language; selectedVoice = c.voiceIdentifier
-                selectedEngine = c.engine
                 updateVoices()
             }
         }
@@ -150,7 +117,7 @@ struct SettingsView: View {
             volume: Float(volume),
             language: selectedLang,
             voiceIdentifier: selectedVoice,
-            engine: selectedEngine
+            engine: .system
         )
         speakerVM.voiceConfig = config
         saveConfig()
@@ -166,7 +133,7 @@ struct SettingsView: View {
             volume: Float(volume),
             language: selectedLang,
             voiceIdentifier: selectedVoice,
-            engine: selectedEngine
+            engine: .system
         )
         if let data = try? JSONEncoder().encode(config) {
             UserDefaults.standard.set(data, forKey: "voiceConfig")

@@ -1,4 +1,4 @@
-// VoiceReader/Services/SpeechService.swift
+// Knowledge/Services/SpeechService.swift
 import Foundation
 import AVFoundation
 

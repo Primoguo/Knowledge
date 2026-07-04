@@ -1,4 +1,4 @@
-# VoiceReader
+# 挠荔枝（Knowledge）
 
 一款 iOS 有声阅读器，让你用耳朵"阅读"文档。导入 PDF、Word、Excel、PPT 或 TXT 文件，即可通过语音朗读功能在后台播放，像听音乐一样听书。
 
@@ -24,9 +24,9 @@
 ## 项目结构
 
 ```
-VoiceReader/
+Knowledge/
 ├── App/
-│   ├── VoiceReaderApp.swift      # 应用入口
+│   ├── KnowledgeApp.swift      # 应用入口
 │   └── AppDelegate.swift          # 后台音频配置
 ├── Models/
 │   ├── Document.swift               # 文档数据模型

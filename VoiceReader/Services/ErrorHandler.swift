@@ -1,4 +1,4 @@
-// VoiceReader/Services/ErrorHandler.swift
+// Knowledge/Services/ErrorHandler.swift
 import Foundation
 import Combine
 

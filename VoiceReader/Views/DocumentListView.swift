@@ -1,4 +1,4 @@
-// VoiceReader/Views/DocumentListView.swift
+// Knowledge/Views/DocumentListView.swift
 import SwiftUI
 import SwiftData
 import UniformTypeIdentifiers
