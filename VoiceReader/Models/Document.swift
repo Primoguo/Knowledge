@@ -5,6 +5,7 @@ import SwiftData
 /// 支持的文档类型
 enum DocumentType: String, Codable, CaseIterable {
     case pdf
+    case epub
     case docx
     case xlsx
     case pptx
@@ -24,6 +25,7 @@ enum DocumentType: String, Codable, CaseIterable {
     var iconName: String {
         switch self {
         case .pdf:  return "doc.richtext"
+        case .epub: return "book"
         case .docx: return "doc.text"
         case .xlsx: return "tablecells"
         case .pptx: return "chart.bar.doc.horizontal"
@@ -34,6 +36,7 @@ enum DocumentType: String, Codable, CaseIterable {
     var iconColor: String {
         switch self {
         case .pdf:  return "red"
+        case .epub: return "purple"
         case .docx: return "blue"
         case .xlsx: return "green"
         case .pptx: return "orange"

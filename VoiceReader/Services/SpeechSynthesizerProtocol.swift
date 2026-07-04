@@ -5,6 +5,8 @@ import Foundation
 protocol SpeechSynthesizerProtocol: AnyObject {
     var state: PlaybackState { get }
     var onPositionChange: ((Int) -> Void)? { get set }
+    /// 当前朗读的字符范围（全文绝对位置）
+    var onRangeChange: ((NSRange) -> Void)? { get set }
 
     func speak(text: String, from position: Int, config: VoiceConfig)
     func pause()

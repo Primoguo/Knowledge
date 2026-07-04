@@ -5,16 +5,47 @@ struct PlayerControlsView: View {
     @ObservedObject var speakerVM: SpeakerViewModel
 
     var body: some View {
-        HStack(spacing: 32) {
-            ControlButton(icon: "gobackward.15", size: .small) { speakerVM.skipBackward() }
-            ControlButton(icon: playIcon, size: .large) { speakerVM.togglePlayPause() }
-            ControlButton(icon: "goforward.30", size: .small) { speakerVM.skipForward() }
+        VStack(spacing: 16) {
+            // 主控制按钮
+            HStack(spacing: 32) {
+                ControlButton(icon: "gobackward.15", size: .small) { speakerVM.skipBackward() }
+                ControlButton(icon: playIcon, size: .large) { speakerVM.togglePlayPause() }
+                ControlButton(icon: "goforward.30", size: .small) { speakerVM.skipForward() }
+            }
+
+            // 语速快捷切换
+            HStack(spacing: 12) {
+                ForEach(quickSpeeds, id: \.label) { preset in
+                    Button(preset.label) {
+                        var config = speakerVM.voiceConfig
+                        config.rate = preset.value
+                        speakerVM.updateConfig(config)
+                    }
+                    .font(.caption2).fontWeight(.semibold)
+                    .padding(.horizontal, 8).padding(.vertical, 4)
+                    .background(
+                        abs(speakerVM.voiceConfig.rate - preset.value) < 0.01
+                            ? Color.blue.opacity(0.2)
+                            : Color.primary.opacity(0.06)
+                    )
+                    .foregroundColor(
+                        abs(speakerVM.voiceConfig.rate - preset.value) < 0.01
+                            ? .blue
+                            : .secondary
+                    )
+                    .cornerRadius(6)
+                }
+            }
         }
     }
 
     private var playIcon: String {
         speakerVM.state == .playing ? "pause.fill" : "play.fill"
     }
+
+    private let quickSpeeds: [(label: String, value: Float)] = [
+        ("0.5x", 0.25), ("1x", 0.5), ("1.5x", 0.75), ("2x", 1.0), ("3x", 1.5),
+    ]
 }
 
 private struct ControlButton: View {

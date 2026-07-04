@@ -7,7 +7,7 @@ struct DocumentPicker: UIViewControllerRepresentable {
 
     func makeUIViewController(context: Context) -> UIDocumentPickerViewController {
         let types: [UTType] = [
-            .pdf, .plainText,
+            .pdf, .plainText, .epub,
             UTType(filenameExtension: "docx") ?? .data,
             UTType(filenameExtension: "xlsx") ?? .data,
             UTType(filenameExtension: "pptx") ?? .data,

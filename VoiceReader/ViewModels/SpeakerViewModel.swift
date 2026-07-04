@@ -14,6 +14,8 @@ final class SpeakerViewModel: ObservableObject {
     @Published var progress: Double = 0.0
     @Published var currentPositionText: String = "00:00"
     @Published var voiceConfig: VoiceConfig = .defaultConfig
+    /// 当前朗读的字符范围（全文绝对位置），用于 UI 高亮
+    @Published var highlightRange: NSRange = NSRange(location: 0, length: 0)
 
     // MARK: - Dependencies（可注入，方便测试）
 
@@ -138,13 +140,20 @@ final class SpeakerViewModel: ObservableObject {
     // MARK: - Private: Bindings
 
     private func setupBindings() {
-        // 播放状态同步
+        // 播放位置同步
         synthesizer.onPositionChange = { [weak self] pos in
             Task { @MainActor in
                 guard let self else { return }
                 self.currentPosition = pos
                 self.updateProgress(pos)
                 self.updateNowPlaying()
+            }
+        }
+
+        // 朗读范围同步（高亮跟随）
+        synthesizer.onRangeChange = { [weak self] range in
+            Task { @MainActor in
+                self?.highlightRange = range
             }
         }
 

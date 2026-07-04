@@ -6,6 +6,7 @@ final class SpeechService: NSObject, SpeechSynthesizerProtocol, AVSpeechSynthesi
 
     private(set) var state: PlaybackState = .idle
     var onPositionChange: ((Int) -> Void)?
+    var onRangeChange: ((NSRange) -> Void)?
 
     private let synthesizer = AVSpeechSynthesizer()
     private var fullText: String = ""
@@ -133,7 +134,10 @@ final class SpeechService: NSObject, SpeechSynthesizerProtocol, AVSpeechSynthesi
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
             let pos = self.currentRange.location + characterRange.location
+            let range = NSRange(location: self.currentRange.location + characterRange.location,
+                                length: characterRange.length)
             self.onPositionChange?(pos)
+            self.onRangeChange?(range)
         }
     }
 

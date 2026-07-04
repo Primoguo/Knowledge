@@ -17,7 +17,40 @@ struct SettingsView: View {
         NavigationStack {
             Form {
                 Section("朗读设置") {
-                    sliderRow("语速", value: $rate, range: 0.1...1.0, format: "%.1fx")
+                    // 语速 + 快捷档位
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Text("语速")
+                            Spacer()
+                            Text(String(format: "%.1fx", rate)).foregroundColor(.secondary)
+                        }
+                        Slider(value: $rate, in: 0.1...2.0, step: 0.05).tint(.blue)
+                            .onChange(of: rate) { apply() }
+                        // 快捷档位
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 8) {
+                                ForEach(VoiceConfig.speedPresets, id: \.label) { preset in
+                                    Button(preset.label) {
+                                        rate = Double(preset.value)
+                                        apply()
+                                    }
+                                    .font(.caption).fontWeight(.medium)
+                                    .padding(.horizontal, 10).padding(.vertical, 5)
+                                    .background(
+                                        abs(rate - Double(preset.value)) < 0.01
+                                            ? Color.blue.opacity(0.15)
+                                            : Color.gray.opacity(0.1)
+                                    )
+                                    .foregroundColor(
+                                        abs(rate - Double(preset.value)) < 0.01
+                                            ? .blue
+                                            : .secondary
+                                    )
+                                    .cornerRadius(8)
+                                }
+                            }
+                        }
+                    }
                     sliderRow("音高", value: $pitch, range: 0.5...2.0, format: "%.1f")
                     sliderRow("音量", value: $volume, range: 0.0...1.0, format: "%.0f%%") { "\(Int($0 * 100))%" }
                 }
