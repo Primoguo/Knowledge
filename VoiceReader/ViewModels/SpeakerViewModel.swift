@@ -76,7 +76,16 @@ final class SpeakerViewModel: ObservableObject {
         guard let doc = currentDocument else { return }
         let target = Int(Double((doc.extractedText as NSString).length) * progress)
         speechService.stop()
-        speechService.speak(text: doc.extractedText, from: target, config: voiceConfig)
+        if state == .playing || state == .paused {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
+                self?.speechService.speak(text: doc.extractedText, from: target, config: self?.voiceConfig ?? .default)
+            }
+        } else {
+            // 如果不在播放中，只更新位置不启动播放
+            currentPosition = target
+            updateProgress(target)
+            savePosition()
+        }
     }
 
     func updateConfig(_ config: VoiceConfig) {
@@ -85,7 +94,9 @@ final class SpeakerViewModel: ObservableObject {
         guard state == .playing, let doc = currentDocument else { return }
         let pos = currentPosition
         speechService.stop()
-        speechService.speak(text: doc.extractedText, from: pos, config: config)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
+            self?.speechService.speak(text: doc.extractedText, from: pos, config: config)
+        }
     }
 
     // MARK: - Private

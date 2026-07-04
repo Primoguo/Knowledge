@@ -53,7 +53,8 @@ struct SettingsView: View {
                 Spacer()
                 Text(display?(value.wrappedValue) ?? String(format: format, value.wrappedValue)).foregroundColor(.secondary)
             }
-            Slider(value: value, in: range, step: 0.05).tint(.blue).onChange(of: value.wrappedValue) { apply() }
+            Slider(value: value, in: range, step: 0.05).tint(.blue)
+                .onChange(of: value.wrappedValue) { apply() }
         }
     }
 
@@ -62,6 +63,10 @@ struct SettingsView: View {
     }
 
     private func apply() {
-        speakerVM.updateConfig(VoiceConfig(rate: Float(rate), pitchMultiplier: Float(pitch), volume: Float(volume), language: selectedLang, voiceIdentifier: selectedVoice))
+        let config = VoiceConfig(rate: Float(rate), pitchMultiplier: Float(pitch), volume: Float(volume), language: selectedLang, voiceIdentifier: selectedVoice)
+        speakerVM.voiceConfig = config
+        // 仅在播放中才实时更新 TTS 引擎
+        guard speakerVM.state == .playing else { return }
+        speakerVM.updateConfig(config)
     }
 }
