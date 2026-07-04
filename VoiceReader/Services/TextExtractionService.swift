@@ -39,6 +39,8 @@ final class TextExtractionService {
             rawText = try extractFromEPUB(url: url)
         case "docx", "xlsx", "pptx":
             rawText = try extractFromOfficeDocument(url: url)
+        case "webpage":
+            rawText = try extractFromPlainText(url: url)
         default:
             throw ExtractionError.unsupportedFileType(fileExtension)
         }
@@ -48,6 +50,102 @@ final class TextExtractionService {
             throw ExtractionError.extractionFailed("文件中没有可提取的文本内容")
         }
         return rawText
+    }
+
+    // MARK: - 网页文本提取
+
+    /// 从 URL 获取网页 HTML 并提取纯文本
+    func extractFromWebPage(urlString: String) async throws -> (title: String, text: String) {
+        guard let url = URL(string: urlString) else {
+            throw ExtractionError.extractionFailed("无效的链接地址")
+        }
+
+        // 获取网页内容
+        let (data, response) = try await URLSession.shared.data(from: url)
+
+        // 尝试从响应中获取编码
+        var encoding: String.Encoding = .utf8
+        if let textEncodingName = (response as? HTTPURLResponse)?.textEncodingName {
+            let cfEncoding = CFStringConvertIANACharSetNameToEncoding(textEncodingName as CFString)
+            if cfEncoding != kCFStringEncodingInvalidId {
+                encoding = String.Encoding(rawValue: CFStringConvertEncodingToNSStringEncoding(cfEncoding))
+            }
+        }
+
+        guard let htmlString = String(data: data, encoding: encoding) ?? String(data: data, encoding: .utf8) else {
+            throw ExtractionError.extractionFailed("无法解析网页内容")
+        }
+
+        // 提取标题
+        let title = extractTitle(from: htmlString) ?? url.host ?? urlString
+
+        // 提取正文：用 NSAttributedString 解析 HTML
+        let text: String
+        if let attributed = try? NSAttributedString(
+            data: data,
+            options: [.documentType: NSAttributedString.DocumentType.html,
+                      .characterEncoding: encoding.rawValue],
+            documentAttributes: nil
+        ) {
+            text = attributed.string
+        } else {
+            // 回退：手动去除 HTML 标签
+            text = stripHTMLTags(htmlString)
+        }
+
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            throw ExtractionError.extractionFailed("网页中没有可提取的文本内容")
+        }
+
+        return (title, trimmed)
+    }
+
+    /// 从 HTML 中提取 <title> 标签内容
+    private func extractTitle(from html: String) -> String? {
+        guard let titleStart = html.range(of: "<title>", options: .caseInsensitive),
+              let titleEnd = html.range(of: "</title>", options: .caseInsensitive) else {
+            // 尝试 og:title meta
+            if let ogStart = html.range(of: #"property="og:title" content=""#, options: .caseInsensitive) {
+                let after = html[ogStart.upperBound...]
+                if let ogEnd = after.range(of: "\"") {
+                    return String(after[..<ogEnd.lowerBound])
+                }
+            }
+            return nil
+        }
+        let title = String(html[titleStart.upperBound..<titleEnd.lowerBound])
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        return title.isEmpty ? nil : title
+    }
+
+    /// 手动去除 HTML 标签
+    private func stripHTMLTags(_ html: String) -> String {
+        var text = html
+        // 去除 script/style 标签及内容
+        text = text.replacingOccurrences(of: "<script[^>]*>[\\s\\S]*?</script>", with: "", options: [.regularExpression, .caseInsensitive])
+        text = text.replacingOccurrences(of: "<style[^>]*>[\\s\\S]*?</style>", with: "", options: [.regularExpression, .caseInsensitive])
+        text = text.replacingOccurrences(of: "<noscript[^>]*>[\\s\\S]*?</noscript>", with: "", options: [.regularExpression, .caseInsensitive])
+        // 去除 head 标签内容
+        text = text.replacingOccurrences(of: "<head[^>]*>[\\s\\S]*?</head>", with: "", options: [.regularExpression, .caseInsensitive])
+        // 去除 HTML 注释
+        text = text.replacingOccurrences(of: "<!--[\\s\\S]*?-->", with: "", options: .regularExpression)
+        // 将块级元素替换为换行
+        text = text.replacingOccurrences(of: "</?(div|p|h[1-6]|li|tr|br|article|section|header|footer|main|aside|nav)[^>]*>", with: "\n", options: [.regularExpression, .caseInsensitive])
+        // 去除所有剩余 HTML 标签
+        text = text.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
+        // 解码 HTML 实体
+        text = text.replacingOccurrences(of: "&nbsp;", with: " ")
+        text = text.replacingOccurrences(of: "&amp;", with: "&")
+        text = text.replacingOccurrences(of: "&lt;", with: "<")
+        text = text.replacingOccurrences(of: "&gt;", with: ">")
+        text = text.replacingOccurrences(of: "&quot;", with: "\"")
+        text = text.replacingOccurrences(of: "&#39;", with: "'")
+        text = text.replacingOccurrences(of: "&ldquo;", with: "\u{201C}")
+        text = text.replacingOccurrences(of: "&rdquo;", with: "\u{201D}")
+        // 清理多余空行
+        text = text.replacingOccurrences(of: "\n{3,}", with: "\n\n", options: .regularExpression)
+        return text
     }
 
     // MARK: - PDF

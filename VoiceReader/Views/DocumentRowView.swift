@@ -47,6 +47,8 @@ struct DocumentRowView: View {
         case "blue":   return .blue
         case "green":  return .green
         case "orange": return .orange
+        case "purple": return .purple
+        case "teal":   return .teal
         default:       return .gray
         }
     }

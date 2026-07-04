@@ -10,12 +10,34 @@ struct SettingsView: View {
     @State private var selectedLang = "zh-CN"
     @State private var voices: [AVSpeechSynthesisVoice] = []
     @State private var selectedVoice: String? = nil
+    @State private var selectedEngine: TTSEngine = .system
 
     private let langs = [("zh-CN", "中文（普通话）"), ("zh-HK", "中文（粤语）"), ("en-US", "English (US)"), ("en-GB", "English (UK)"), ("ja-JP", "日本語"), ("ko-KR", "한국어")]
 
     var body: some View {
         NavigationStack {
             Form {
+                Section("语音引擎") {
+                    Picker("引擎", selection: $selectedEngine) {
+                        ForEach(TTSEngine.allCases, id: \.self) { engine in
+                            VStack(alignment: .leading) {
+                                Text(engine.displayName)
+                                Text(engine.description)
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }.tag(engine)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    .onChange(of: selectedEngine) {
+                        speakerVM.switchEngine(to: selectedEngine)
+                        var config = speakerVM.voiceConfig
+                        config.engine = selectedEngine
+                        speakerVM.voiceConfig = config
+                        saveConfig()
+                    }
+                }
+
                 Section("朗读设置") {
                     // 语速 + 快捷档位
                     VStack(alignment: .leading, spacing: 8) {
@@ -54,6 +76,7 @@ struct SettingsView: View {
                     sliderRow("音高", value: $pitch, range: 0.5...2.0, format: "%.1f")
                     sliderRow("音量", value: $volume, range: 0.0...1.0, format: "%.0f%%") { "\(Int($0 * 100))%" }
                 }
+
                 Section("语音选择") {
                     Picker("语言", selection: $selectedLang) {
                         ForEach(langs, id: \.0) { code, name in Text(name).tag(code) }
@@ -64,9 +87,16 @@ struct SettingsView: View {
                             ForEach(voices, id: \.identifier) { v in Text(v.name).tag(v.identifier as String?) }
                         }.onChange(of: selectedVoice) { apply() }
                     }
+                    if selectedEngine == .edge {
+                        HStack {
+                            Image(systemName: "info.circle.fill").foregroundColor(.blue).font(.caption)
+                            Text("Edge TTS 使用微软 AI 语音，需要联网")
+                                .font(.caption).foregroundColor(.secondary)
+                        }
+                    }
                 }
                 Section("关于") {
-                    HStack { Text("版本"); Spacer(); Text("1.0.0").foregroundColor(.secondary) }
+                    HStack { Text("版本"); Spacer(); Text("1.2.0").foregroundColor(.secondary) }
                 }
             }
             .navigationTitle("设置")
@@ -74,6 +104,7 @@ struct SettingsView: View {
                 let c = speakerVM.voiceConfig
                 rate = Double(c.rate); pitch = Double(c.pitchMultiplier); volume = Double(c.volume)
                 selectedLang = c.language; selectedVoice = c.voiceIdentifier
+                selectedEngine = c.engine
                 updateVoices()
             }
         }
@@ -96,10 +127,32 @@ struct SettingsView: View {
     }
 
     private func apply() {
-        let config = VoiceConfig(rate: Float(rate), pitchMultiplier: Float(pitch), volume: Float(volume), language: selectedLang, voiceIdentifier: selectedVoice)
+        let config = VoiceConfig(
+            rate: Float(rate),
+            pitchMultiplier: Float(pitch),
+            volume: Float(volume),
+            language: selectedLang,
+            voiceIdentifier: selectedVoice,
+            engine: selectedEngine
+        )
         speakerVM.voiceConfig = config
+        saveConfig()
         // 仅在播放中才实时更新 TTS 引擎
         guard speakerVM.state == .playing else { return }
         speakerVM.updateConfig(config)
+    }
+
+    private func saveConfig() {
+        let config = VoiceConfig(
+            rate: Float(rate),
+            pitchMultiplier: Float(pitch),
+            volume: Float(volume),
+            language: selectedLang,
+            voiceIdentifier: selectedVoice,
+            engine: selectedEngine
+        )
+        if let data = try? JSONEncoder().encode(config) {
+            UserDefaults.standard.set(data, forKey: "voiceConfig")
+        }
     }
 }

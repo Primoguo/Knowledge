@@ -19,10 +19,14 @@ final class SpeakerViewModel: ObservableObject {
 
     // MARK: - Dependencies（可注入，方便测试）
 
-    private let synthesizer: SpeechSynthesizerProtocol
+    private var synthesizer: SpeechSynthesizerProtocol
     private let nowPlaying: NowPlayingService
     private let audioSession: AudioSessionService
     private let errorHandler: ErrorHandler
+
+    // 持有两个引擎实例
+    private let systemSynthesizer = SpeechService()
+    private let edgeSynthesizer = EdgeTTSService()
 
     // MARK: - Internal State
 
@@ -32,16 +36,41 @@ final class SpeakerViewModel: ObservableObject {
     // MARK: - Init
 
     init(
-        synthesizer: SpeechSynthesizerProtocol = SpeechService(),
+        synthesizer: SpeechSynthesizerProtocol? = nil,
         nowPlaying: NowPlayingService = .shared,
         audioSession: AudioSessionService = .shared,
         errorHandler: ErrorHandler = .shared
     ) {
-        self.synthesizer = synthesizer
+        self.synthesizer = synthesizer ?? SpeechService()
         self.nowPlaying = nowPlaying
         self.audioSession = audioSession
         self.errorHandler = errorHandler
         setupBindings()
+    }
+
+    /// 根据配置切换语音引擎
+    func switchEngine(to engine: TTSEngine) {
+        let wasPlaying = state == .playing
+        let currentPos = currentPosition
+        let currentDoc = currentDocument
+
+        // 停止当前引擎
+        synthesizer.stop()
+
+        // 切换引擎
+        let newEngine: SpeechSynthesizerProtocol = engine == .edge ? edgeSynthesizer : systemSynthesizer
+        synthesizer = newEngine
+
+        // 重新绑定回调
+        setupBindings()
+
+        // 如果之前在播放，恢复播放
+        if wasPlaying, let doc = currentDoc {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+                guard let self else { return }
+                self.synthesizer.speak(text: doc.extractedText, from: currentPos, config: self.voiceConfig)
+            }
+        }
     }
 
     // MARK: - Document Loading
@@ -213,6 +242,11 @@ final class SpeakerViewModel: ObservableObject {
     private func loadConfig() -> VoiceConfig {
         guard let data = UserDefaults.standard.data(forKey: "voiceConfig"),
               let c = try? JSONDecoder().decode(VoiceConfig.self, from: data) else { return .defaultConfig }
+        // 如果配置中使用了 Edge 引擎，切换到 Edge
+        if c.engine == .edge && synthesizer is SpeechService {
+            synthesizer = edgeSynthesizer
+            setupBindings()
+        }
         return c
     }
 

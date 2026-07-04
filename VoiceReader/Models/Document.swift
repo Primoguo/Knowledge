@@ -12,6 +12,7 @@ enum DocumentType: String, Codable, CaseIterable {
     case txt
     case md
     case markdown
+    case webpage
     case unknown
 
     init(fileExtension: String) {
@@ -19,28 +20,33 @@ enum DocumentType: String, Codable, CaseIterable {
     }
 
     var displayName: String {
-        rawValue.uppercased()
+        switch self {
+        case .webpage: return "网页"
+        default:       return rawValue.uppercased()
+        }
     }
 
     var iconName: String {
         switch self {
-        case .pdf:  return "doc.richtext"
-        case .epub: return "book"
-        case .docx: return "doc.text"
-        case .xlsx: return "tablecells"
-        case .pptx: return "chart.bar.doc.horizontal"
-        default:    return "doc"
+        case .pdf:     return "doc.richtext"
+        case .epub:    return "book"
+        case .docx:    return "doc.text"
+        case .xlsx:    return "tablecells"
+        case .pptx:    return "chart.bar.doc.horizontal"
+        case .webpage: return "globe"
+        default:       return "doc"
         }
     }
 
     var iconColor: String {
         switch self {
-        case .pdf:  return "red"
-        case .epub: return "purple"
-        case .docx: return "blue"
-        case .xlsx: return "green"
-        case .pptx: return "orange"
-        default:    return "gray"
+        case .pdf:     return "red"
+        case .epub:    return "purple"
+        case .docx:    return "blue"
+        case .xlsx:    return "green"
+        case .pptx:    return "orange"
+        case .webpage: return "teal"
+        default:       return "gray"
         }
     }
 }
