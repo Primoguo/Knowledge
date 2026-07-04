@@ -33,8 +33,9 @@ struct DocumentPicker: UIViewControllerRepresentable {
                 .appendingPathComponent(url.lastPathComponent)
             try? FileManager.default.removeItem(at: dest)
             do {
-                if url.startAccessingSecurityScopedResource() {
-                    defer { url.stopAccessingSecurityScopedResource() }
+                let accessing = url.startAccessingSecurityScopedResource()
+                defer {
+                    if accessing { url.stopAccessingSecurityScopedResource() }
                 }
                 try FileManager.default.copyItem(at: url, to: dest)
                 onPick(dest)

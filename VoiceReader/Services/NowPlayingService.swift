@@ -22,7 +22,7 @@ final class NowPlayingService {
         info[MPMediaItemPropertyPlaybackDuration] = duration
         info[MPNowPlayingInfoPropertyElapsedPlaybackTime] = elapsed
         info[MPNowPlayingInfoPropertyPlaybackRate] = rate
-        info[MPNowPlayingInfoPropertyMediaType] = MPNowPlayingInfoMediaType.audioBook.rawValue
+        info[MPNowPlayingInfoPropertyMediaType] = MPNowPlayingInfoMediaType.audio.rawValue
         infoCenter.nowPlayingInfo = info
     }
 

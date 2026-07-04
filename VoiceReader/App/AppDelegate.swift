@@ -12,7 +12,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
             try session.setCategory(
                 .playback,
                 mode: .spokenAudio,
-                options: [.allowBluetooth, .allowAirPlay]
+                options: [.allowBluetoothHFP, .allowAirPlay]
             )
             try session.setActive(true)
         } catch {

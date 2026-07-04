@@ -75,11 +75,11 @@ final class TextExtractionService {
         do {
             let attributedString = try NSAttributedString(
                 url: url,
-                options: [.documentType: NSAttributedString.DocumentType.officeDocument],
+                options: [.documentType: NSAttributedString.DocumentType.rtf],
                 documentAttributes: nil
             )
             let text = attributedString.string
-            guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            guard !text.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines).isEmpty else {
                 throw ExtractionError.extractionFailed("文档内容为空")
             }
             return text
