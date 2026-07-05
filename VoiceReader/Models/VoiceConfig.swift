@@ -4,16 +4,19 @@ import Foundation
 /// 语音合成引擎类型
 enum TTSEngine: String, Codable, CaseIterable {
     case system = "system"
+    case knowledgeVoice = "knowledgeVoice"
 
     var displayName: String {
         switch self {
         case .system: return "系统 TTS"
+        case .knowledgeVoice: return "Knowledge Voice"
         }
     }
 
     var description: String {
         switch self {
         case .system: return "iOS 系统内置语音，离线可用"
+        case .knowledgeVoice: return "AI 语音合成，高品质音色（即将推出）"
         }
     }
 }
@@ -27,6 +30,10 @@ struct VoiceConfig: Equatable, Codable {
     var voiceIdentifier: String? = nil
     /// TTS 引擎选择
     var engine: TTSEngine = .system
+    /// Knowledge Voice 克隆音色 ID
+    var clonedVoiceId: String?
+    /// Knowledge Voice 预设音色 ID
+    var presetVoiceId: String?
 
     static let defaultConfig = VoiceConfig()
 

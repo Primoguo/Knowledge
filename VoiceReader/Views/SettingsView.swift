@@ -11,6 +11,8 @@ struct SettingsView: View {
     @State private var selectedLang = "zh-CN"
     @State private var voices: [AVSpeechSynthesisVoice] = []
     @State private var selectedVoice: String? = nil
+    @State private var selectedEngine: TTSEngine = .system
+    @State private var showVoiceSelect = false
 
     private let langs = [("zh-CN", "中文（普通话）"), ("zh-HK", "中文（粤语）"), ("en-US", "English (US)"), ("en-GB", "English (UK)"), ("ja-JP", "日本語"), ("ko-KR", "한국어")]
 
@@ -37,16 +39,37 @@ struct SettingsView: View {
                 }
 
                 Section("语音引擎") {
-                    HStack {
-                        VStack(alignment: .leading) {
-                            Text("系统 TTS")
-                            Text("iOS 系统内置语音，离线可用")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
+                    ForEach(TTSEngine.allCases, id: \.self) { engine in
+                        Button(action: {
+                            if engine != .knowledgeVoice {
+                                selectedEngine = engine
+                                speakerVM.switchEngine(to: engine)
+                            }
+                        }) {
+                            HStack {
+                                VStack(alignment: .leading) {
+                                    Text(engine.displayName)
+                                    Text(engine.description)
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+                                Spacer()
+                                if selectedEngine == engine {
+                                    Image(systemName: "checkmark")
+                                        .foregroundColor(.accentColor)
+                                }
+                                if engine == .knowledgeVoice {
+                                    Text("即将推出")
+                                        .font(.caption2)
+                                        .padding(.horizontal, 6)
+                                        .padding(.vertical, 2)
+                                        .background(Color(.systemGray5))
+                                        .cornerRadius(4)
+                                        .foregroundColor(.secondary)
+                                }
+                            }
                         }
-                        Spacer()
-                        Image(systemName: "checkmark")
-                            .foregroundColor(.accentColor)
+                        .foregroundColor(engine == .knowledgeVoice ? .secondary : .primary)
                     }
                 }
 
@@ -101,7 +124,7 @@ struct SettingsView: View {
                     }
                 }
                 Section("关于") {
-                    HStack { Text("版本"); Spacer(); Text("1.2.0").foregroundColor(.secondary) }
+                    HStack { Text("版本"); Spacer(); Text("2.0.0").foregroundColor(.secondary) }
                 }
             }
             .navigationTitle("设置")
@@ -109,7 +132,11 @@ struct SettingsView: View {
                 let c = speakerVM.voiceConfig
                 rate = Double(c.rate); pitch = Double(c.pitchMultiplier); volume = Double(c.volume)
                 selectedLang = c.language; selectedVoice = c.voiceIdentifier
+                selectedEngine = c.engine
                 updateVoices()
+            }
+            .sheet(isPresented: $showVoiceSelect) {
+                VoiceSelectView(speakerVM: speakerVM)
             }
         }
     }
@@ -137,7 +164,9 @@ struct SettingsView: View {
             volume: Float(volume),
             language: selectedLang,
             voiceIdentifier: selectedVoice,
-            engine: .system
+            engine: selectedEngine,
+            clonedVoiceId: selectedEngine == .knowledgeVoice ? VoiceStore.loadSelectedClone() : nil,
+            presetVoiceId: selectedEngine == .knowledgeVoice ? VoiceStore.loadSelectedPreset() : nil
         )
         speakerVM.voiceConfig = config
         saveConfig()
@@ -153,7 +182,9 @@ struct SettingsView: View {
             volume: Float(volume),
             language: selectedLang,
             voiceIdentifier: selectedVoice,
-            engine: .system
+            engine: selectedEngine,
+            clonedVoiceId: selectedEngine == .knowledgeVoice ? VoiceStore.loadSelectedClone() : nil,
+            presetVoiceId: selectedEngine == .knowledgeVoice ? VoiceStore.loadSelectedPreset() : nil
         )
         if let data = try? JSONEncoder().encode(config) {
             UserDefaults.standard.set(data, forKey: "voiceConfig")

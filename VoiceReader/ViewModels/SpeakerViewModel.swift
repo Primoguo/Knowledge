@@ -26,6 +26,12 @@ final class SpeakerViewModel: ObservableObject {
 
     // 持有引擎实例
     private let systemSynthesizer = SpeechService()
+    private let cosyVoiceSynthesizer = CosyVoiceSynthesizer()
+
+    // AI 总结状态
+    @Published var summaryResult: SummaryResult?
+    @Published var isGeneratingSummary = false
+    @Published var summaryError: String?
 
     // MARK: - Internal State
 
@@ -49,10 +55,25 @@ final class SpeakerViewModel: ObservableObject {
 
     /// 根据配置切换语音引擎
     func switchEngine(to engine: TTSEngine) {
-        // 当前仅支持系统 TTS，引擎切换为预留接口
-        // 后续接入阿里云 CosyVoice 时将在此处添加新引擎
-        synthesizer = systemSynthesizer
+        switch engine {
+        case .system:
+            synthesizer = systemSynthesizer
+        case .knowledgeVoice:
+            synthesizer = cosyVoiceSynthesizer
+        }
+        voiceConfig.engine = engine
+        saveConfig(voiceConfig)
         setupBindings()
+
+        // 如果正在播放，用新引擎重新开始
+        if state == .playing, let doc = currentDocument {
+            let pos = currentPosition
+            synthesizer.stop()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+                guard let self else { return }
+                self.synthesizer.speak(text: doc.extractedText, from: pos, config: self.voiceConfig)
+            }
+        }
     }
 
     // MARK: - Document Loading
@@ -148,6 +169,47 @@ final class SpeakerViewModel: ObservableObject {
         }
     }
 
+    // MARK: - AI Summary
+
+    /// 为当前文档生成 AI 摘要
+    func generateSummary() {
+        guard let doc = currentDocument, !doc.extractedText.isEmpty else { return }
+
+        // 如果已有缓存摘要，直接返回
+        if let cached = doc.summary, let result = SummaryResult.fromJSON(cached) {
+            summaryResult = result
+            return
+        }
+
+        isGeneratingSummary = true
+        summaryError = nil
+
+        Task {
+            do {
+                let result = try await AISummaryService.shared.generateSummary(for: doc.extractedText)
+                await MainActor.run {
+                    summaryResult = result
+                    isGeneratingSummary = false
+                    // 缓存到 Document
+                    doc.summary = result.toJSON()
+                }
+            } catch {
+                await MainActor.run {
+                    summaryError = error.localizedDescription
+                    isGeneratingSummary = false
+                }
+            }
+        }
+    }
+
+    /// 朗读 AI 摘要
+    func readSummaryAloud() {
+        guard let result = summaryResult else { return }
+        let summaryText = result.content + "\n\n" + result.keyPoints.joined(separator: "\n")
+        synthesizer.stop()
+        synthesizer.speak(text: summaryText, from: 0, config: voiceConfig)
+    }
+
     // MARK: - Private: Bindings
 
     private func setupBindings() {
@@ -173,7 +235,14 @@ final class SpeakerViewModel: ObservableObject {
             Task { @MainActor in
                 guard let self else { return }
                 print("🔊 TTS 引擎错误: \(error.localizedDescription)")
-                // 后续接入阿里云 CosyVoice 时，可在此处实现降级逻辑
+                // Knowledge Voice 出错时降级到系统 TTS
+                if self.voiceConfig.engine == .knowledgeVoice {
+                    print("⬇️ 降级到系统 TTS")
+                    self.voiceConfig.engine = .system
+                    self.synthesizer = self.systemSynthesizer
+                    self.setupBindings()
+                    self.saveConfig(self.voiceConfig)
+                }
             }
         }
 

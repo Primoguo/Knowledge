@@ -62,6 +62,10 @@ final class Document {
     var lastOpenedDate: Date
     var createdAt: Date
     var isFavorite: Bool
+    /// AI 生成的文档摘要
+    var summary: String?
+    /// 播客音频文件路径（V3.0）
+    var podcastAudioPath: String?
 
     // MARK: - 计算属性（不持久化）
 
@@ -91,7 +95,9 @@ final class Document {
         currentPosition: Int = 0,
         lastOpenedDate: Date = Date(),
         createdAt: Date = Date(),
-        isFavorite: Bool = false
+        isFavorite: Bool = false,
+        summary: String? = nil,
+        podcastAudioPath: String? = nil
     ) {
         self.id = id
         self.title = title
@@ -102,5 +108,7 @@ final class Document {
         self.lastOpenedDate = lastOpenedDate
         self.createdAt = createdAt
         self.isFavorite = isFavorite
+        self.summary = summary
+        self.podcastAudioPath = podcastAudioPath
     }
 }

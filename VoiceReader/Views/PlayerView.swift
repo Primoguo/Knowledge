@@ -4,6 +4,7 @@ import SwiftUI
 struct PlayerView: View {
     @ObservedObject var speakerVM: SpeakerViewModel
     @State private var scrollProxy: ScrollViewProxy?
+    @State private var showSummary = false
 
     var body: some View {
         NavigationStack {
@@ -41,6 +42,41 @@ struct PlayerView: View {
                 }
             }
             .navigationTitle("正在播放")
+            .toolbar {
+                if let doc = speakerVM.currentDocument, !doc.extractedText.isEmpty {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button(action: { showSummary = true }) {
+                            Image(systemName: "sparkles")
+                                .foregroundColor(.accentColor)
+                        }
+                        .disabled(speakerVM.isGeneratingSummary)
+                    }
+                }
+            }
+            .sheet(isPresented: $showSummary) {
+                summarySheet
+            }
+        }
+    }
+
+    // MARK: - Summary Sheet
+
+    @ViewBuilder
+    private var summarySheet: some View {
+        if speakerVM.isGeneratingSummary {
+            SummaryLoadingView()
+        } else if let error = speakerVM.summaryError {
+            SummaryErrorView(message: error) {
+                speakerVM.generateSummary()
+            }
+        } else if let result = speakerVM.summaryResult {
+            SummaryCardView(result: result) {
+                speakerVM.readSummaryAloud()
+            }
+        } else {
+            // 首次进入，触发生成
+            Color.clear
+                .onAppear { speakerVM.generateSummary() }
         }
     }
 
