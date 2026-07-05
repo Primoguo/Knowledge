@@ -10,6 +10,7 @@
 | 🔊 **语音朗读** | 基于系统 AVSpeechSynthesizer，无需联网，支持多种语言 |
 | 🎛️ **后台播放** | 切换 App 后继续朗读，锁屏状态显示播放控制 |
 | ⚙️ **语音设置** | 可调节语速、音高、音量，切换语言与声音 |
+| 🌓 **主题模式** | 支持跟随系统、白天模式、暗黑模式三种外观 |
 | 📍 **进度记忆** | 自动保存朗读位置，下次打开继续播放 |
 | 📚 **书库管理** | 支持删除、查看文档，显示朗读进度 |
 
@@ -31,6 +32,7 @@ Knowledge/
 ├── Models/
 │   ├── Document.swift               # 文档数据模型
 │   ├── PlaybackState.swift          # 播放状态
+│   ├── ThemeMode.swift              # 主题模式枚举
 │   └── VoiceConfig.swift            # 语音配置
 ├── ViewModels/
 │   └── SpeakerViewModel.swift     # 核心播放逻辑
@@ -38,7 +40,11 @@ Knowledge/
 │   ├── SpeechService.swift          # 语音合成服务
 │   ├── TextExtractionService.swift  # 文本提取服务
 │   ├── NowPlayingService.swift      # 锁屏控制服务
-│   └── AudioSessionService.swift    # 音频会话管理
+│   ├── AudioSessionService.swift    # 音频会话管理
+│   ├── ErrorHandler.swift           # 全局错误处理
+│   ├── LanguageDetector.swift       # 语言检测
+│   ├── ShareExtensionHandler.swift  # 分享内容处理
+│   └── ThemeManager.swift           # 主题模式管理
 ├── Views/
 │   ├── ContentView.swift            # 主界面
 │   ├── DocumentListView.swift       # 文档列表
@@ -64,7 +70,8 @@ Knowledge/
 2. 选择要朗读的文档，点击播放按钮
 3. 在播放器界面控制播放/暂停、快进/快退
 4. 在设置页调整语速、音高、音量、语言
-5. 切换其他 App 或锁屏，朗读继续后台播放
+5. 在设置页切换主题模式（跟随系统 / 白天 / 暗黑）
+6. 切换其他 App 或锁屏，朗读继续后台播放
 
 ## 截图
 

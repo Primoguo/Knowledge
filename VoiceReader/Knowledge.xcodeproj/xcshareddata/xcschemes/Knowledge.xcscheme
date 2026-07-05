@@ -15,8 +15,8 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "42AEFBAE01D2DFD981F7DA7D"
-               BuildableName = "VoiceReader.app"
-               BlueprintName = "VoiceReader"
+               BuildableName = "Knowledge.app"
+               BlueprintName = "Knowledge"
                ReferencedContainer = "container:Knowledge.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -45,8 +45,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "42AEFBAE01D2DFD981F7DA7D"
-            BuildableName = "VoiceReader.app"
-            BlueprintName = "VoiceReader"
+            BuildableName = "Knowledge.app"
+            BlueprintName = "Knowledge"
             ReferencedContainer = "container:Knowledge.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -62,8 +62,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "42AEFBAE01D2DFD981F7DA7D"
-            BuildableName = "VoiceReader.app"
-            BlueprintName = "VoiceReader"
+            BuildableName = "Knowledge.app"
+            BlueprintName = "Knowledge"
             ReferencedContainer = "container:Knowledge.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>

@@ -122,6 +122,17 @@
 		
 		}; /* Assets.xcassets in Resources */
 
+		ACF2CBD6D61B4FB18C7E0CFF = {
+			isa = PBXBuildFile;
+			fileRef = 24681123362549C2B5920A14;
+
+		}; /* ThemeMode.swift in Sources */
+		540FA32216B147CD834BCBA1 = {
+			isa = PBXBuildFile;
+			fileRef = F0DA3FA5CB454C77B3E28FA6;
+
+		}; /* ThemeManager.swift in Sources */
+
 		F5BF48AA40CAD7891EB709FC = {
 			isa = PBXFileReference;
 			explicitFileType = wrapper.application;
@@ -292,6 +303,21 @@
 			sourceTree = "<group>";
 		
 		}; /* Assets.xcassets */
+
+		24681123362549C2B5920A14 = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = ThemeMode.swift;
+			sourceTree = "<group>";
+
+		}; /* ThemeMode.swift */
+		F0DA3FA5CB454C77B3E28FA6 = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = ThemeManager.swift;
+			sourceTree = "<group>";
+
+		}; /* ThemeManager.swift */
 		1A2B3C4D5E6F7A8B9C0D1E2F = {
 			isa = PBXFileReference;
 			lastKnownFileType = sourcecode.swift;
@@ -359,6 +385,7 @@
 				D72A05CEA76127CDE65DB96E,
 							9F39EF664636F59FD1FA5C2D,
 							4B997CE9364FC87DE4EA6A8F,
+				24681123362549C2B5920A14,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -375,6 +402,7 @@
 							51F2B740A37D27FAB273081B,
 							DF9D95D8AAA6880C262B67BF,
 							1A2B3C4D5E6F7A8B9C0D1E2F,
+							F0DA3FA5CB454C77B3E28FA6,
 						);
 			path = Services;
 			sourceTree = "<group>";
@@ -525,6 +553,8 @@
 				349299CC2B017ABC5EFBD828 /* PlayerView.swift in Sources */,
 				1ED9AE877F6B92AE3A311987 /* SettingsView.swift in Sources */,
 				0A1B2C3D4E5F6A7B8C9D0E1F /* ShareExtensionHandler.swift in Sources */,
+				ACF2CBD6D61B4FB18C7E0CFF /* ThemeMode.swift in Sources */,
+				540FA32216B147CD834BCBA1 /* ThemeManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		
