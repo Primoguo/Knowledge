@@ -5,6 +5,7 @@ import SwiftData
 @main
 struct KnowledgeApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    @StateObject private var themeManager = ThemeManager.shared
 
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([Document.self])
@@ -19,6 +20,8 @@ struct KnowledgeApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(themeManager)
+                .preferredColorScheme(themeManager.mode.colorScheme)
         }
         .modelContainer(sharedModelContainer)
     }

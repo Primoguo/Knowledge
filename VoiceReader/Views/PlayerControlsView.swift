@@ -25,12 +25,12 @@ struct PlayerControlsView: View {
                     .padding(.horizontal, 8).padding(.vertical, 4)
                     .background(
                         abs(speakerVM.voiceConfig.rate - preset.value) < 0.01
-                            ? Color.blue.opacity(0.2)
+                            ? Color.accentColor.opacity(0.2)
                             : Color.primary.opacity(0.06)
                     )
                     .foregroundColor(
                         abs(speakerVM.voiceConfig.rate - preset.value) < 0.01
-                            ? .blue
+                            ? .accentColor
                             : .secondary
                     )
                     .cornerRadius(6)
@@ -58,7 +58,7 @@ private struct ControlButton: View {
                 .font(.system(size: size == .large ? 28 : 22))
                 .foregroundColor(.primary)
                 .frame(width: size == .large ? 64 : 40, height: size == .large ? 64 : 40)
-                .background(size == .large ? Circle().fill(Color.blue.opacity(0.12)) : Circle().fill(Color.clear))
+                .background(size == .large ? Circle().fill(Color.accentColor.opacity(0.12)) : Circle().fill(Color.clear))
         }
     }
 }

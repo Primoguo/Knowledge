@@ -17,7 +17,7 @@ struct DocumentRowView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(document.title)
                     .font(.system(size: 16, weight: .medium)).lineLimit(1)
-                    .foregroundColor(isPlaying ? .blue : .primary)
+                    .foregroundColor(isPlaying ? .accentColor : .primary)
                 HStack(spacing: 8) {
                     Text(document.fileType.displayName)
                         .font(.caption2).fontWeight(.medium)
@@ -30,11 +30,11 @@ struct DocumentRowView: View {
             if document.progress > 0 {
                 VStack(alignment: .trailing, spacing: 4) {
                     Text("\(Int(document.progress * 100))%").font(.caption).foregroundColor(.secondary)
-                    ProgressView(value: document.progress).frame(width: 40).tint(.blue)
+                    ProgressView(value: document.progress).frame(width: 40).tint(.accentColor)
                 }
             }
             if isPlaying {
-                Image(systemName: "waveform").font(.title3).foregroundColor(.blue)
+                Image(systemName: "waveform").font(.title3).foregroundColor(.accentColor)
                     .symbolEffect(.variableColor.iterative)
             }
         }

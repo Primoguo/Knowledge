@@ -23,7 +23,7 @@ struct PlayerView: View {
                         VStack(spacing: 12) {
                             // 进度条
                             VStack(spacing: 6) {
-                                Slider(value: Binding(get: { speakerVM.progress }, set: { speakerVM.seekTo(progress: $0) })).tint(.blue)
+                                Slider(value: Binding(get: { speakerVM.progress }, set: { speakerVM.seekTo(progress: $0) })).tint(.accentColor)
                                 HStack {
                                     Text(speakerVM.currentPositionText).font(.caption).foregroundColor(.secondary)
                                     Spacer()
@@ -50,7 +50,7 @@ struct PlayerView: View {
         HStack(spacing: 12) {
             ZStack {
                 RoundedRectangle(cornerRadius: 10)
-                    .fill(LinearGradient(colors: [.blue.opacity(0.7), .purple.opacity(0.5)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                    .fill(LinearGradient(colors: [.accentColor.opacity(0.7), .purple.opacity(0.5)], startPoint: .topLeading, endPoint: .bottomTrailing))
                     .frame(width: 48, height: 48)
                 Image(systemName: doc.fileType.iconName).font(.title3).foregroundColor(.white)
             }
@@ -105,9 +105,9 @@ struct PlayerView: View {
             if let stringRange = Range(safeRange, in: fullText),
                let attrRange = AttributedString.Index(stringRange.lowerBound, within: attributed)
                 .map({ $0..<AttributedString.Index(stringRange.upperBound, within: attributed)! }) {
-                attributed[attrRange].foregroundColor = .blue
+                attributed[attrRange].foregroundColor = .accentColor
                 attributed[attrRange].font = .system(size: 17, weight: .bold, design: .serif)
-                attributed[attrRange].backgroundColor = Color.blue.opacity(0.1)
+                attributed[attrRange].backgroundColor = Color.accentColor.opacity(0.1)
             }
         }
 

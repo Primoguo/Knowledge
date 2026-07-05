@@ -85,7 +85,7 @@ struct DocumentListView: View {
                 Button { showPicker = true } label: {
                     Label("导入文档", systemImage: "square.and.arrow.down.fill")
                         .font(.headline).padding(.horizontal, 24).padding(.vertical, 12)
-                        .background(Color.blue).foregroundColor(.white).clipShape(Capsule())
+                        .background(Color.accentColor).foregroundColor(.white).clipShape(Capsule())
                 }
                 Button { showURLInput = true } label: {
                     Label("添加网页", systemImage: "link")

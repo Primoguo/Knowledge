@@ -4,6 +4,7 @@ import AVFoundation
 
 struct SettingsView: View {
     @ObservedObject var speakerVM: SpeakerViewModel
+    @EnvironmentObject var themeManager: ThemeManager
     @State private var rate: Double = 0.5
     @State private var pitch: Double = 1.0
     @State private var volume: Double = 1.0
@@ -16,6 +17,25 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
+                Section("外观") {
+                    ForEach(ThemeMode.allCases, id: \.self) { theme in
+                        Button(action: { themeManager.mode = theme }) {
+                            HStack {
+                                Image(systemName: theme.iconName)
+                                    .frame(width: 28)
+                                    .foregroundColor(.accentColor)
+                                Text(theme.rawValue)
+                                    .foregroundColor(.primary)
+                                Spacer()
+                                if themeManager.mode == theme {
+                                    Image(systemName: "checkmark")
+                                        .foregroundColor(.accentColor)
+                                }
+                            }
+                        }
+                    }
+                }
+
                 Section("语音引擎") {
                     HStack {
                         VStack(alignment: .leading) {
@@ -26,7 +46,7 @@ struct SettingsView: View {
                         }
                         Spacer()
                         Image(systemName: "checkmark")
-                            .foregroundColor(.blue)
+                            .foregroundColor(.accentColor)
                     }
                 }
 
@@ -38,7 +58,7 @@ struct SettingsView: View {
                             Spacer()
                             Text(String(format: "%.1fx", rate)).foregroundColor(.secondary)
                         }
-                        Slider(value: $rate, in: 0.1...2.0, step: 0.05).tint(.blue)
+                        Slider(value: $rate, in: 0.1...2.0, step: 0.05).tint(.accentColor)
                             .onChange(of: rate) { apply() }
                         // 快捷档位
                         ScrollView(.horizontal, showsIndicators: false) {
@@ -52,12 +72,12 @@ struct SettingsView: View {
                                     .padding(.horizontal, 10).padding(.vertical, 5)
                                     .background(
                                         abs(rate - Double(preset.value)) < 0.01
-                                            ? Color.blue.opacity(0.15)
+                                            ? Color.accentColor.opacity(0.15)
                                             : Color.gray.opacity(0.1)
                                     )
                                     .foregroundColor(
                                         abs(rate - Double(preset.value)) < 0.01
-                                            ? .blue
+                                            ? .accentColor
                                             : .secondary
                                     )
                                     .cornerRadius(8)
@@ -101,7 +121,7 @@ struct SettingsView: View {
                 Spacer()
                 Text(display?(value.wrappedValue) ?? String(format: format, value.wrappedValue)).foregroundColor(.secondary)
             }
-            Slider(value: value, in: range, step: 0.05).tint(.blue)
+            Slider(value: value, in: range, step: 0.05).tint(.accentColor)
                 .onChange(of: value.wrappedValue) { apply() }
         }
     }
