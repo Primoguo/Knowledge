@@ -197,11 +197,3 @@ struct CompanionView: View {
     }
 }
 
-// MARK: - Companion Message Model
-
-struct CompanionMessage: Identifiable {
-    let id = UUID()
-    let content: String
-    let isUser: Bool
-    var isLoading = false
-}
