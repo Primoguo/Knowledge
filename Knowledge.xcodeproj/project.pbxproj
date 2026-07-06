@@ -150,6 +150,16 @@
 			fileRef = 2108F219FDC474BFC8A00E14;
 
 		}; /* AISummaryService.swift in Sources */
+		949F95A789E54829860C9DD9 = {
+			isa = PBXBuildFile;
+			fileRef = A4906938E2794B56944CC92A;
+
+		}; /* CompanionService.swift in Sources */
+		FFDEC8CB6E714B3AA8D6792C = {
+			isa = PBXBuildFile;
+			fileRef = 251FB0E6C31D422CAD13C161;
+
+		}; /* CompanionMessage.swift in Sources */
 
 		2307C848FE02329AF1A37739 = {
 			isa = PBXBuildFile;
@@ -393,6 +403,20 @@
 			sourceTree = "<group>";
 
 		}; /* AISummaryService.swift */
+		A4906938E2794B56944CC92A = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = CompanionService.swift;
+			sourceTree = "<group>";
+
+		}; /* CompanionService.swift */
+		251FB0E6C31D422CAD13C161 = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = CompanionMessage.swift;
+			sourceTree = "<group>";
+
+		}; /* CompanionMessage.swift */
 		CD2FF9A9B2611C44593160A1 = {
 			isa = PBXFileReference;
 			lastKnownFileType = sourcecode.swift;
@@ -523,6 +547,22 @@
 							1A2B3C4D5E6F7A8B9C0D1E2F,
 							F0DA3FA5CB454C77B3E28FA6,
 							2108F219FDC474BFC8A00E14 /* AISummaryService.swift */,
+		A4906938E2794B56944CC92A = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = CompanionService.swift;
+			sourceTree = "<group>";
+
+		}; /* CompanionService.swift */
+		251FB0E6C31D422CAD13C161 = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = CompanionMessage.swift;
+			sourceTree = "<group>";
+
+		}; /* CompanionMessage.swift */
+				A4906938E2794B56944CC92A /* CompanionService.swift */,
+				251FB0E6C31D422CAD13C161 /* CompanionMessage.swift */,
 							CD2FF9A9B2611C44593160A1 /* CosyVoiceService.swift */,
 							9BE56C7556829E5992850159 /* CosyVoiceSynthesizer.swift */,
 						);
@@ -684,6 +724,16 @@
 			70514E4AEF136CEC171294B2 /* ClonedVoice.swift in Sources */,
 			E119FF079BDE6F116F9DE819 /* SummaryResult.swift in Sources */,
 			CB35E63DC4A50F5311668C62 /* AISummaryService.swift in Sources */,
+		949F95A789E54829860C9DD9 = {
+			isa = PBXBuildFile;
+			fileRef = A4906938E2794B56944CC92A;
+
+		}; /* CompanionService.swift in Sources */
+		FFDEC8CB6E714B3AA8D6792C = {
+			isa = PBXBuildFile;
+			fileRef = 251FB0E6C31D422CAD13C161;
+
+		}; /* CompanionMessage.swift in Sources */
 			2307C848FE02329AF1A37739 /* CosyVoiceService.swift in Sources */,
 			B03CB3DF4ECE98746FDBE028 /* CosyVoiceSynthesizer.swift in Sources */,
 			1DA73C1450D667169FA7796B /* APIKeyConfigView.swift in Sources */,
