@@ -1,4 +1,4 @@
-# VoiceReader（挠荔枝）产品需求文档
+# Knowledge（挠荔枝）产品需求文档
 
 ---
 
@@ -10,9 +10,9 @@
 | 状态 | 已生效（持续迭代中） |
 | 创建日期 | 2026-07-05 |
 | 作者 | Primoguo |
-| 产品名称 | VoiceReader / 挠荔枝 |
+| 产品名称 | Knowledge / 挠荔枝 |
 | 平台 | iOS 17+（SwiftUI + SwiftData） |
-| 代码仓库 | https://github.com/Primoguo/VoiceReader |
+| 代码仓库 | https://github.com/Primoguo/Knowledge |
 
 ---
 
@@ -31,7 +31,7 @@
 
 ### 3.1 业务背景
 
-信息爆炸时代，用户每天面对大量文字内容——PDF 报告、电子书、网页文章、Office 文档。传统阅读方式受限于场景（通勤、运动、做家务时无法阅读）和视力疲劳。VoiceReader 致力于**让用户用耳朵「阅读」一切文字内容**，将任意文档格式转为高品质有声朗读。
+信息爆炸时代，用户每天面对大量文字内容——PDF 报告、电子书、网页文章、Office 文档。传统阅读方式受限于场景（通勤、运动、做家务时无法阅读）和视力疲劳。Knowledge 致力于**让用户用耳朵「阅读」一切文字内容**，将任意文档格式转为高品质有声朗读。
 
 ### 3.2 产品目标（SMART）
 
@@ -127,7 +127,7 @@
 |----|------|------|------|----------|
 | US-001 | 用户 | 导入 PDF 文件 | 把 PDF 报告转成语音 | 1. 文件选择器支持 PDF<br>2. 提取文本并显示在播放器<br>3. 文本无乱码（含 OCR 回退） |
 | US-002 | 用户 | 粘贴网页链接 | 听网页文章 | 1. 输入 URL 后自动获取<br>2. 只提取正文，不读导航/广告<br>3. 标题从 og:title 获取 |
-| US-003 | 用户 | 通过 Safari 分享导入 | 浏览器中一键发送到 VoiceReader | 1. 分享菜单显示 VoiceReader<br>2. 打开 App 弹出确认导入对话框 |
+| US-003 | 用户 | 通过 Safari 分享导入 | 浏览器中一键发送到 Knowledge | 1. 分享菜单显示 Knowledge<br>2. 打开 App 弹出确认导入对话框 |
 | US-004 | 用户 | 调节语速 | 按自己习惯的速度听 | 1. 滑块调节 + 快捷档位按钮<br>2. 实时生效<br>3. 持久化保存 |
 | US-005 | 用户 | 使用 TTS 引擎 | 系统 TTS 朗读文档 | 1. 系统 TTS 离线可用<br>2. 后续支持阿里云 CosyVoice 高品质语音 |
 | US-006 | 用户 | 快进/快退 | 跳过已听内容或回听 | 1. 快进 30s / 快退 15s<br>2. 锁屏控制中心也可操作 |
@@ -176,9 +176,9 @@
 - **异常处理**：网络超时 → 提示重试；无正文 → 提示「网页中无可提取的正文」
 
 #### 7.1.3 Share Extension 导入
-- **功能描述**：Safari 分享菜单一键发送到 VoiceReader
+- **功能描述**：Safari 分享菜单一键发送到 Knowledge
 - **主流程**：
-  1. Safari 中点击分享 → 选择 VoiceReader
+  1. Safari 中点击分享 → 选择 Knowledge
   2. ShareExtension 接收 URL/文本 → 通过 App Group UserDefaults 传递
   3. 主 App 检测 `pendingShareURL` → 弹出确认对话框
   4. 确认后调用网页提取流程
@@ -730,7 +730,7 @@ V3.0 🔲 规划中
 ### 15.1 项目文件结构
 
 ```
-VoiceReader/
+Knowledge/
 ├── App/
 │   ├── KnowledgeApp.swift           # @main 入口（注入 ThemeManager）
 │   └── AppDelegate.swift             # 音频会话配置
