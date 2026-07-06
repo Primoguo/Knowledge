@@ -1,0 +1,12 @@
+schema_version: 1
+module_path: services/voice_synthesis
+title: 语音合成服务层（CosyVoice + 系统 TTS）
+scope:
+    - Services/CosyVoiceService.swift
+    - Services/CosyVoiceSynthesizer.swift
+    - Services/SpeechService.swift
+    - Services/SpeechSynthesizerProtocol.swift
+source_files: []
+depends_on: []
+related_to:
+    - path: ui/player_controls

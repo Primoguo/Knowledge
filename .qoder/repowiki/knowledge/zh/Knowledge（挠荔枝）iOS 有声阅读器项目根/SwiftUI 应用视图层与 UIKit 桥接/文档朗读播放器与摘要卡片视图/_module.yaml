@@ -1,0 +1,12 @@
+schema_version: 1
+module_path: ui/player_controls
+title: 文档朗读播放器与摘要卡片视图
+scope:
+    - Views/PlayerView.swift
+    - Views/PlayerControlsView.swift
+    - Views/SummaryCardView.swift
+source_files: []
+depends_on: []
+related_to:
+    - path: services
+    - path: services/voice_synthesis

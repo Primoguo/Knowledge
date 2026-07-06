@@ -1,0 +1,13 @@
+schema_version: 1
+module_path: ui/document_management
+title: 文档管理与书库视图
+scope:
+    - Views/ContentView.swift
+    - Views/DocumentListView.swift
+    - Views/DocumentRowView.swift
+    - UIKit/DocumentPicker.swift
+source_files: []
+depends_on: []
+related_to:
+    - path: services
+    - path: services/app_helpers

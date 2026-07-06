@@ -1,0 +1,196 @@
+# 知识卡导出索引文件
+schema_version: 1
+locale: zh-CN
+branch: main
+nodes_managed: true
+exported_at: "2026-07-06T15:18:15Z"
+modules:
+    "":
+        dir_name: Knowledge（挠荔枝）iOS 有声阅读器项目根
+        title: Knowledge（挠荔枝）iOS 有声阅读器项目根
+        scope:
+            - .gitignore
+            - .gitkeep
+            - PRD.md
+            - README.md
+            - copy_pbxproj.py
+            - fix_pbxproj.py
+            - modify_pbxproj.py
+        source_files: []
+        children:
+            - models
+            - resources
+            - services
+            - ui
+        depends_on: []
+        related_to: []
+    build_system:
+        dir_name: Xcode 原生构建与手工 pbxproj 脚本（无 CI_自动化）
+        title: Xcode 原生构建与手工 pbxproj 脚本（无 CI/自动化）
+        scope: []
+        source_files:
+            - Knowledge.xcodeproj/project.pbxproj
+            - copy_pbxproj.py
+            - fix_pbxproj.py
+            - modify_pbxproj.py
+            - Resources/Info.plist
+            - ShareExtension/Info.plist
+        children: []
+        depends_on: []
+        related_to: []
+    configuration_system:
+        dir_name: 基于 UserDefaults 的轻量级运行时配置系统
+        title: 基于 UserDefaults 的轻量级运行时配置系统
+        scope: []
+        source_files:
+            - Resources/Info.plist
+            - Models/VoiceConfig.swift
+            - ViewModels/SpeakerViewModel.swift
+            - Views/APIKeyConfigView.swift
+            - Views/SettingsView.swift
+            - Services/ThemeManager.swift
+            - Models/ClonedVoice.swift
+            - Services/CosyVoiceService.swift
+            - Services/AISummaryService.swift
+        children: []
+        depends_on: []
+        related_to: []
+    dependency_management:
+        dir_name: iOS 原生依赖管理（无第三方包管理器）
+        title: iOS 原生依赖管理（无第三方包管理器）
+        scope: []
+        source_files:
+            - Knowledge.xcodeproj/project.pbxproj
+        children: []
+        depends_on: []
+        related_to: []
+    error_handling:
+        dir_name: Swift 错误处理：LocalizedError + ErrorHandler 单例模式
+        title: Swift 错误处理：LocalizedError + ErrorHandler 单例模式
+        scope: []
+        source_files:
+            - Services/ErrorHandler.swift
+            - Services/AISummaryService.swift
+            - Services/CosyVoiceService.swift
+            - Services/TextExtractionService.swift
+            - Views/SummaryCardView.swift
+        children: []
+        depends_on: []
+        related_to: []
+    frontend_style:
+        dir_name: iOS SwiftUI 主题与视觉样式体系
+        title: iOS SwiftUI 主题与视觉样式体系
+        scope: []
+        source_files:
+            - Models/ThemeMode.swift
+            - Services/ThemeManager.swift
+            - App/KnowledgeApp.swift
+            - Views/SettingsView.swift
+            - Resources/Assets.xcassets/AccentColor.colorset/Contents.json
+        children: []
+        depends_on: []
+        related_to: []
+    logging_system:
+        dir_name: 基于 print 的轻量级日志与错误处理
+        title: 基于 print 的轻量级日志与错误处理
+        scope: []
+        source_files:
+            - Services/ErrorHandler.swift
+        children: []
+        depends_on: []
+        related_to: []
+    models:
+        dir_name: 领域模型与配置数据层
+        title: 领域模型与配置数据层
+        scope:
+            - Models/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []
+    resources:
+        dir_name: iOS 应用资源包（Info.plist、图标与颜色）
+        title: iOS 应用资源包（Info.plist、图标与颜色）
+        scope:
+            - Resources/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []
+    services:
+        dir_name: 应用服务层（文本处理、语音合成与系统集成）
+        title: 应用服务层（文本处理、语音合成与系统集成）
+        scope:
+            - Services/
+        source_files: []
+        children:
+            - services/app_helpers
+            - services/voice_synthesis
+        depends_on: []
+        related_to:
+            - path: ui/document_management
+            - path: ui/player_controls
+    services/app_helpers:
+        dir_name: 应用级共享服务（主题、分享扩展、错误处理）
+        title: 应用级共享服务（主题、分享扩展、错误处理）
+        scope:
+            - Services/ThemeManager.swift
+            - Services/ShareExtensionHandler.swift
+            - Services/ErrorHandler.swift
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: ui/document_management
+    services/voice_synthesis:
+        dir_name: 语音合成服务层（CosyVoice + 系统 TTS）
+        title: 语音合成服务层（CosyVoice + 系统 TTS）
+        scope:
+            - Services/CosyVoiceService.swift
+            - Services/CosyVoiceSynthesizer.swift
+            - Services/SpeechService.swift
+            - Services/SpeechSynthesizerProtocol.swift
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: ui/player_controls
+    ui:
+        dir_name: SwiftUI 应用视图层与 UIKit 桥接
+        title: SwiftUI 应用视图层与 UIKit 桥接
+        scope:
+            - Views/
+            - UIKit/
+        source_files: []
+        children:
+            - ui/document_management
+            - ui/player_controls
+        depends_on: []
+        related_to: []
+    ui/document_management:
+        dir_name: 文档管理与书库视图
+        title: 文档管理与书库视图
+        scope:
+            - Views/ContentView.swift
+            - Views/DocumentListView.swift
+            - Views/DocumentRowView.swift
+            - UIKit/DocumentPicker.swift
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: services
+            - path: services/app_helpers
+    ui/player_controls:
+        dir_name: 文档朗读播放器与摘要卡片视图
+        title: 文档朗读播放器与摘要卡片视图
+        scope:
+            - Views/PlayerView.swift
+            - Views/PlayerControlsView.swift
+            - Views/SummaryCardView.swift
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: services
+            - path: services/voice_synthesis

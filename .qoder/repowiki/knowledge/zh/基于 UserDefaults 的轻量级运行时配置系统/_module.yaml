@@ -1,0 +1,16 @@
+schema_version: 1
+module_path: configuration_system
+title: 基于 UserDefaults 的轻量级运行时配置系统
+scope: []
+source_files:
+    - Resources/Info.plist
+    - Models/VoiceConfig.swift
+    - ViewModels/SpeakerViewModel.swift
+    - Views/APIKeyConfigView.swift
+    - Views/SettingsView.swift
+    - Services/ThemeManager.swift
+    - Models/ClonedVoice.swift
+    - Services/CosyVoiceService.swift
+    - Services/AISummaryService.swift
+depends_on: []
+related_to: []

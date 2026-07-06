@@ -1,0 +1,10 @@
+schema_version: 1
+module_path: services
+title: 应用服务层（文本处理、语音合成与系统集成）
+scope:
+    - Services/
+source_files: []
+depends_on: []
+related_to:
+    - path: ui/document_management
+    - path: ui/player_controls

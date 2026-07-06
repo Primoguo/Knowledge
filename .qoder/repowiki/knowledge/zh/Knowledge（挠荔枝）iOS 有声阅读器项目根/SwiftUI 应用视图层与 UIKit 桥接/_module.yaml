@@ -1,0 +1,9 @@
+schema_version: 1
+module_path: ui
+title: SwiftUI 应用视图层与 UIKit 桥接
+scope:
+    - Views/
+    - UIKit/
+source_files: []
+depends_on: []
+related_to: []

@@ -1,0 +1,8 @@
+schema_version: 1
+module_path: resources
+title: iOS 应用资源包（Info.plist、图标与颜色）
+scope:
+    - Resources/
+source_files: []
+depends_on: []
+related_to: []

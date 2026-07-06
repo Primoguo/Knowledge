@@ -1,0 +1,14 @@
+schema_version: 1
+module_path: ""
+title: Knowledge（挠荔枝）iOS 有声阅读器项目根
+scope:
+    - .gitignore
+    - .gitkeep
+    - PRD.md
+    - README.md
+    - copy_pbxproj.py
+    - fix_pbxproj.py
+    - modify_pbxproj.py
+source_files: []
+depends_on: []
+related_to: []
