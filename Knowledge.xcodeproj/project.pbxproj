@@ -39,8 +39,8 @@
 		EB15D8752FFD06DD0098B690 /* CompanionService 2.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB15D8742FFD06DD0098B690 /* CompanionService 2.swift */; };
 		EB15D8772FFD06EF0098B690 /* CompanionMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB15D8762FFD06EF0098B690 /* CompanionMessage.swift */; };
 		EB15D8792FFD07130098B690 /* CompanionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB15D8782FFD07130098B690 /* CompanionView.swift */; };
-		EBF368572FFD0CA9001AEF1A /* SystemVoiceManager 2.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBF368562FFD0CA9001AEF1A /* SystemVoiceManager 2.swift */; };
 		EBF368592FFD0CCE001AEF1A /* SystemVoiceSelectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBF368582FFD0CCE001AEF1A /* SystemVoiceSelectView.swift */; };
+		EBF3685B2FFD0E0D001AEF1A /* SystemVoiceManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBF3685A2FFD0E0D001AEF1A /* SystemVoiceManager.swift */; };
 		F188BAFE84A60CAD8CCDBA5B /* KnowledgeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DD135397EAB7233199FA6BB /* KnowledgeApp.swift */; };
 		F369DB20693DA0E82EBE1FF9 /* SpeechService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 650FA3D5817B693720E7C24A /* SpeechService.swift */; };
 		F56DF3AE955D0B7687C889DB /* VoiceCloneView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F0F5553C0145BB8213C1372 /* VoiceCloneView.swift */; };
@@ -87,8 +87,8 @@
 		EB15D8742FFD06DD0098B690 /* CompanionService 2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CompanionService 2.swift"; sourceTree = "<group>"; };
 		EB15D8762FFD06EF0098B690 /* CompanionMessage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanionMessage.swift; sourceTree = "<group>"; };
 		EB15D8782FFD07130098B690 /* CompanionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanionView.swift; sourceTree = "<group>"; };
-		EBF368562FFD0CA9001AEF1A /* SystemVoiceManager 2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SystemVoiceManager 2.swift"; sourceTree = "<group>"; };
 		EBF368582FFD0CCE001AEF1A /* SystemVoiceSelectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemVoiceSelectView.swift; sourceTree = "<group>"; };
+		EBF3685A2FFD0E0D001AEF1A /* SystemVoiceManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemVoiceManager.swift; sourceTree = "<group>"; };
 		F0DA3FA5CB454C77B3E28FA6 /* ThemeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeManager.swift; sourceTree = "<group>"; };
 		F5BF48AA40CAD7891EB709FC /* Knowledge.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Knowledge.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		Z1B2C3D4E5F6A7B8C9D0E1F2A3 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -123,8 +123,8 @@
 		4FB096A4286A77BD94438835 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				EBF3685A2FFD0E0D001AEF1A /* SystemVoiceManager.swift */,
 				EBF368582FFD0CCE001AEF1A /* SystemVoiceSelectView.swift */,
-				EBF368562FFD0CA9001AEF1A /* SystemVoiceManager 2.swift */,
 				EB15D8782FFD07130098B690 /* CompanionView.swift */,
 				EB15D8762FFD06EF0098B690 /* CompanionMessage.swift */,
 				EB15D8742FFD06DD0098B690 /* CompanionService 2.swift */,
@@ -339,6 +339,7 @@
 				BFFF14D99BE365358D80FA0A /* PlaybackState.swift in Sources */,
 				95F9774DA2884E0E2618AEBD /* VoiceConfig.swift in Sources */,
 				EB15D8752FFD06DD0098B690 /* CompanionService 2.swift in Sources */,
+				EBF3685B2FFD0E0D001AEF1A /* SystemVoiceManager.swift in Sources */,
 				4E93C25917D659F4C7B4E091 /* AudioSessionService.swift in Sources */,
 				486F6C074A4A4FD29807A0AB /* ErrorHandler.swift in Sources */,
 				9CD5C7E64BF5AF50AE79E892 /* LanguageDetector.swift in Sources */,
@@ -354,11 +355,11 @@
 				B65186DFA68CAA0110AF98C2 /* DocumentRowView.swift in Sources */,
 				A55B319EC4410490DB345C29 /* PlayerControlsView.swift in Sources */,
 				349299CC2B017ABC5EFBD828 /* PlayerView.swift in Sources */,
+				EBF3685D2FFD0E21001AEF1A /* SystemVoiceSelectView.swift in Sources */,
 				1ED9AE877F6B92AE3A311987 /* SettingsView.swift in Sources */,
 				0A1B2C3D4E5F6A7B8C9D0E1F /* ShareExtensionHandler.swift in Sources */,
 				ACF2CBD6D61B4FB18C7E0CFF /* ThemeMode.swift in Sources */,
 				540FA32216B147CD834BCBA1 /* ThemeManager.swift in Sources */,
-				EBF368572FFD0CA9001AEF1A /* SystemVoiceManager 2.swift in Sources */,
 				70514E4AEF136CEC171294B2 /* ClonedVoice.swift in Sources */,
 				E119FF079BDE6F116F9DE819 /* SummaryResult.swift in Sources */,
 				EB15D8792FFD07130098B690 /* CompanionView.swift in Sources */,
