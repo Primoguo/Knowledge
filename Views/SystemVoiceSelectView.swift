@@ -68,16 +68,30 @@ struct SystemVoiceSelectView: View {
     
     // MARK: - Computed
     
-    /// 推荐的 Neural 音色（优先展示）
+    /// 推荐的 Neural 音色（优先展示，中文在前）
     @available(iOS 17.0, *)
     private var recommendedVoices: [SystemVoiceInfo] {
-        voices.filter { voice in
+        let filtered = voices.filter { voice in
             // 放宽中文语言代码匹配：支持 zh、zh-CN、zh-TW、zh-HK、yue 等
             let isChinese = voice.language.hasPrefix("zh") || voice.language.hasPrefix("yue") || voice.language.hasPrefix("cmn")
             // 英文语言代码：en-US、en-GB、en-AU 等
             let isEnglish = voice.language.hasPrefix("en-")
             
             return voice.isNeural && (isChinese || isEnglish)
+        }
+        
+        // 排序：中文在前，其他语言在后
+        return filtered.sorted { voice1, voice2 in
+            let isChinese1 = voice1.language.hasPrefix("zh") || voice1.language.hasPrefix("yue") || voice1.language.hasPrefix("cmn")
+            let isChinese2 = voice2.language.hasPrefix("zh") || voice2.language.hasPrefix("yue") || voice2.language.hasPrefix("cmn")
+            
+            if isChinese1 && !isChinese2 {
+                return true  // voice1 是中文，排前面
+            } else if !isChinese1 && isChinese2 {
+                return false  // voice2 是中文，排前面
+            } else {
+                return voice1.name < voice2.name  // 同类型按名称排序
+            }
         }
     }
     
