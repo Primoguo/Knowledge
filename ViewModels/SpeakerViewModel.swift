@@ -47,6 +47,8 @@ final class SpeakerViewModel: ObservableObject {
 
     private var cancellables = Set<AnyCancellable>()
     private var currentPosition = 0
+    /// 高亮更新防抖计时器（避免频繁 UI 刷新）
+    private var highlightDebounceTimer: Timer?
 
     // MARK: - Init
 
@@ -293,10 +295,16 @@ final class SpeakerViewModel: ObservableObject {
             }
         }
 
-        // 朗读范围同步（高亮跟随）
+        // 朗读范围同步（高亮跟随）- 使用防抖避免频繁 UI 更新
         synthesizer.onRangeChange = { [weak self] range in
             Task { @MainActor in
-                self?.highlightRange = range
+                guard let self else { return }
+                // 取消之前的定时器
+                self.highlightDebounceTimer?.invalidate()
+                // 设置新的防抖定时器（100ms 后更新 UI）
+                self.highlightDebounceTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: false) { _ in
+                    self.highlightRange = range
+                }
             }
         }
 
