@@ -13,6 +13,7 @@ struct SettingsView: View {
     @State private var selectedVoice: String? = nil
     @State private var selectedEngine: TTSEngine = .system
     @State private var showVoiceSelect = false
+    @State private var showSystemVoiceSelect = false
 
     private let langs = [("zh-CN", "中文（普通话）"), ("zh-HK", "中文（粤语）"), ("en-US", "English (US)"), ("en-GB", "English (UK)"), ("ja-JP", "日本語"), ("ko-KR", "한국어")]
 
@@ -111,14 +112,55 @@ struct SettingsView: View {
                 }
 
                 Section("语音选择") {
-                    Picker("语言", selection: $selectedLang) {
-                        ForEach(langs, id: \.0) { code, name in Text(name).tag(code) }
-                    }.onChange(of: selectedLang) { updateVoices(); apply() }
-                    if !voices.isEmpty {
-                        Picker("声音", selection: $selectedVoice) {
-                            Text("默认").tag(nil as String?)
-                            ForEach(voices, id: \.identifier) { v in Text(v.name).tag(v.identifier as String?) }
-                        }.onChange(of: selectedVoice) { apply() }
+                    // Apple Neural TTS 音色选择入口（仅 iOS 17+）
+                    if #available(iOS 17.0, *), selectedEngine == .system {
+                        Button(action: { showSystemVoiceSelect = true }) {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("系统音色")
+                                        .font(.body)
+                                    Text("选择 Neural 增强版音色")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                    }
+                    
+                    // Knowledge Voice 音色选择入口
+                    if selectedEngine == .knowledgeVoice {
+                        Button(action: { showVoiceSelect = true }) {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("AI 音色")
+                                        .font(.body)
+                                    Text("选择 CosyVoice 预设或克隆音色")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                    }
+                    
+                    // 传统语言选择（降级兼容）
+                    if selectedEngine == .legacySystem {
+                        Picker("语言", selection: $selectedLang) {
+                            ForEach(langs, id: \.0) { code, name in Text(name).tag(code) }
+                        }.onChange(of: selectedLang) { updateVoices(); apply() }
+                        if !voices.isEmpty {
+                            Picker("声音", selection: $selectedVoice) {
+                                Text("默认").tag(nil as String?)
+                                ForEach(voices, id: \.identifier) { v in Text(v.name).tag(v.identifier as String?) }
+                            }.onChange(of: selectedVoice) { apply() }
+                        }
                     }
                 }
                 Section("关于") {
@@ -135,6 +177,9 @@ struct SettingsView: View {
             }
             .sheet(isPresented: $showVoiceSelect) {
                 VoiceSelectView(speakerVM: speakerVM)
+            }
+            .sheet(isPresented: $showSystemVoiceSelect) {
+                SystemVoiceSelectView(speakerVM: speakerVM)
             }
         }
     }

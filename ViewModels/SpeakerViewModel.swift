@@ -108,6 +108,13 @@ final class SpeakerViewModel: ObservableObject {
         } else {
             voiceConfig = savedConfig
         }
+        
+        // 如果使用 Apple Neural TTS，确保有音色 identifier
+        if voiceConfig.engine == .system, #available(iOS 17.0, *), voiceConfig.voiceIdentifier == nil {
+            if let recommended = SystemVoiceManager.shared.recommendedVoice(for: voiceConfig.language) {
+                voiceConfig.voiceIdentifier = recommended.identifier
+            }
+        }
 
         progress = document.progress
         currentPosition = document.currentPosition
