@@ -71,7 +71,14 @@ struct SystemVoiceSelectView: View {
     /// 推荐的 Neural 音色（优先展示）
     @available(iOS 17.0, *)
     private var recommendedVoices: [SystemVoiceInfo] {
-        voices.filter { $0.isNeural && ($0.language.hasPrefix("zh-") || $0.language.hasPrefix("en-")) }
+        voices.filter { voice in
+            // 放宽中文语言代码匹配：支持 zh、zh-CN、zh-TW、zh-HK、yue 等
+            let isChinese = voice.language.hasPrefix("zh") || voice.language.hasPrefix("yue") || voice.language.hasPrefix("cmn")
+            // 英文语言代码：en-US、en-GB、en-AU 等
+            let isEnglish = voice.language.hasPrefix("en-")
+            
+            return voice.isNeural && (isChinese || isEnglish)
+        }
     }
     
     // MARK: - Actions
@@ -86,7 +93,8 @@ struct SystemVoiceSelectView: View {
             
             // 检查是否有中文 Neural TTS 音色
             let hasChineseNeural = voices.contains { voice in
-                (voice.language.hasPrefix("zh-") || voice.language.hasPrefix("yue-")) && voice.isNeural
+                let isChinese = voice.language.hasPrefix("zh") || voice.language.hasPrefix("yue") || voice.language.hasPrefix("cmn")
+                return isChinese && voice.isNeural
             }
             
             // 调试信息：打印所有中文相关音色
