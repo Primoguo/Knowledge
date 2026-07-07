@@ -25,10 +25,13 @@ enum TTSEngine: String, Codable, CaseIterable {
     
     /// 是否支持当前设备
     var isSupported: Bool {
-        if #available(iOS 17.0, *) {
-            return true  // 所有引擎都支持
-        } else {
-            return self != .system  // iOS < 17 不支持 Neural TTS
+        switch self {
+        case .system:
+            // Apple Neural TTS 需要 iOS 17+
+            return #available(iOS 17.0, *)
+        case .knowledgeVoice, .legacySystem:
+            // Knowledge Voice 和传统 TTS 所有版本都支持
+            return true
         }
     }
 }

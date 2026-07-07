@@ -3,7 +3,7 @@ schema_version: 1
 locale: zh-CN
 branch: main
 nodes_managed: true
-exported_at: "2026-07-06T15:18:15Z"
+exported_at: "2026-07-07T10:12:31Z"
 modules:
     "":
         dir_name: Knowledge（挠荔枝）iOS 有声阅读器项目根
@@ -39,7 +39,7 @@ modules:
         depends_on: []
         related_to: []
     configuration_system:
-        dir_name: 基于 UserDefaults 的轻量级运行时配置系统
+        dir_name: 基于 UserDefaults 的轻量级运行时配置系统_2
         title: 基于 UserDefaults 的轻量级运行时配置系统
         scope: []
         source_files:
@@ -118,42 +118,15 @@ modules:
         depends_on: []
         related_to: []
     services:
-        dir_name: 应用服务层（文本处理、语音合成与系统集成）
-        title: 应用服务层（文本处理、语音合成与系统集成）
+        dir_name: 横向能力服务层（文档解析、AI 摘要与伴读、语音合成与播放状态）
+        title: 横向能力服务层（文档解析、AI 摘要与伴读、语音合成与播放状态）
         scope:
             - Services/
         source_files: []
-        children:
-            - services/app_helpers
-            - services/voice_synthesis
-        depends_on: []
-        related_to:
-            - path: ui/document_management
-            - path: ui/player_controls
-    services/app_helpers:
-        dir_name: 应用级共享服务（主题、分享扩展、错误处理）
-        title: 应用级共享服务（主题、分享扩展、错误处理）
-        scope:
-            - Services/ThemeManager.swift
-            - Services/ShareExtensionHandler.swift
-            - Services/ErrorHandler.swift
-        source_files: []
         children: []
         depends_on: []
         related_to:
             - path: ui/document_management
-    services/voice_synthesis:
-        dir_name: 语音合成服务层（CosyVoice + 系统 TTS）
-        title: 语音合成服务层（CosyVoice + 系统 TTS）
-        scope:
-            - Services/CosyVoiceService.swift
-            - Services/CosyVoiceSynthesizer.swift
-            - Services/SpeechService.swift
-            - Services/SpeechSynthesizerProtocol.swift
-        source_files: []
-        children: []
-        depends_on: []
-        related_to:
             - path: ui/player_controls
     ui:
         dir_name: SwiftUI 应用视图层与 UIKit 桥接
@@ -180,7 +153,6 @@ modules:
         depends_on: []
         related_to:
             - path: services
-            - path: services/app_helpers
     ui/player_controls:
         dir_name: 文档朗读播放器与摘要卡片视图
         title: 文档朗读播放器与摘要卡片视图
@@ -193,4 +165,3 @@ modules:
         depends_on: []
         related_to:
             - path: services
-            - path: services/voice_synthesis

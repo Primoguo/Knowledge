@@ -1,6 +1,6 @@
 schema_version: 1
 module_path: services
-title: 应用服务层（文本处理、语音合成与系统集成）
+title: 横向能力服务层（文档解析、AI 摘要与伴读、语音合成与播放状态）
 scope:
     - Services/
 source_files: []
