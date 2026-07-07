@@ -70,9 +70,9 @@ struct SystemVoiceInfo: Identifiable, Equatable {
         self.id = voice.identifier
         self.name = voice.name
         self.language = voice.language
+        self.isNeural = #available(iOS 17.0, *) ? (voice.quality == .enhanced || voice.quality == .premium) : false
         
         if #available(iOS 17.0, *) {
-            self.isNeural = voice.quality == .enhanced || voice.quality == .premium
             switch voice.quality {
             case .enhanced:
                 self.quality = "增强版"
@@ -84,7 +84,6 @@ struct SystemVoiceInfo: Identifiable, Equatable {
                 self.quality = "未知"
             }
         } else {
-            self.isNeural = false
             self.quality = "标准版"
         }
     }
