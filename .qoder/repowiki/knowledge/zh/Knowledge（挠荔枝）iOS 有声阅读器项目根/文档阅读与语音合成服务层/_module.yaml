@@ -1,6 +1,6 @@
 schema_version: 1
 module_path: services
-title: 横向能力服务层（文档解析、AI 摘要与伴读、语音合成与播放状态）
+title: 文档阅读与语音合成服务层
 scope:
     - Services/
 source_files: []

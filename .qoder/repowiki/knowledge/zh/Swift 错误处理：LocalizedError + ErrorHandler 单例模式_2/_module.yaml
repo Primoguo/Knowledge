@@ -6,11 +6,7 @@ source_files:
     - Services/ErrorHandler.swift
     - Services/AISummaryService.swift
     - Services/CosyVoiceService.swift
-    - Services/CompanionService.swift
-    - Views/ContentView.swift
-    - Views/DocumentListView.swift
-    - Views/VoiceCloneView.swift
-    - Views/VoiceSelectView.swift
-    - Services/AudioSessionService.swift
+    - Services/TextExtractionService.swift
+    - Views/SummaryCardView.swift
 depends_on: []
 related_to: []

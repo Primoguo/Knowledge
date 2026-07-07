@@ -1,0 +1,8 @@
+schema_version: 1
+module_path: dependency_management
+title: iOS 原生依赖管理（无第三方包管理器）
+scope: []
+source_files:
+    - Knowledge.xcodeproj/project.pbxproj
+depends_on: []
+related_to: []

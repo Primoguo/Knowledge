@@ -9,4 +9,6 @@ scope:
 source_files: []
 depends_on: []
 related_to:
+    - path: models
     - path: services
+    - path: ui/player_controls

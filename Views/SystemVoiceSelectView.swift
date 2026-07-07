@@ -1,6 +1,7 @@
 // Knowledge/Views/SystemVoiceSelectView.swift
 import SwiftUI
 import AVFoundation
+import UIKit
 
 /// 系统音色选择页面（iOS 17+ Neural TTS）
 struct SystemVoiceSelectView: View {
@@ -21,6 +22,11 @@ struct SystemVoiceSelectView: View {
                                 selectVoice(voice)
                             }
                         }
+                    }
+                    
+                    if recommendedVoices.isEmpty {
+                        // 如果没有推荐的 Neural 音色，显示下载提示
+                        downloadHintSection
                     }
                     
                     Section("全部音色") {
@@ -78,6 +84,11 @@ struct SystemVoiceSelectView: View {
             
             voices = allVoices
             
+            // 检查是否有中文 Neural TTS 音色
+            let hasChineseNeural = voices.contains { voice in
+                (voice.language.hasPrefix("zh-") || voice.language.hasPrefix("yue-")) && voice.isNeural
+            }
+            
             // 加载当前选中的音色
             if let currentId = speakerVM.voiceConfig.voiceIdentifier {
                 selectedVoiceId = currentId
@@ -86,6 +97,11 @@ struct SystemVoiceSelectView: View {
                 if let firstNeural = voices.first(where: { $0.isNeural }) {
                     selectedVoiceId = firstNeural.id
                 }
+            }
+            
+            // 如果没有中文 Neural 音色，显示下载提示
+            if !hasChineseNeural {
+                print("⚠️ 未检测到中文 Neural TTS 音色，需要手动下载")
             }
         } else {
             voices = []
@@ -171,6 +187,53 @@ struct SystemVoiceSelectView: View {
         case "en-US": return "English (US)"
         case "en-GB": return "English (UK)"
         default: return code
+        }
+    }
+    
+    // MARK: - Download Hint
+    
+    @available(iOS 17.0, *)
+    private var downloadHintSection: some View {
+        Section {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 8) {
+                    Image(systemName: "arrow.down.circle.fill")
+                        .font(.title2)
+                        .foregroundColor(.accentColor)
+                    
+                    Text("需要下载 Neural TTS 音色")
+                        .font(.headline)
+                }
+                
+                Text("Apple Neural TTS 音色需要手动下载。请按以下步骤操作：\n\n1. 打开「设置」→「辅助功能」→「朗读内容」\n2. 点击「声音」→「中文」\n3. 选择你喜欢的 Neural 音色并下载\n4. 返回本页面重新加载")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .lineSpacing(4)
+                
+                Button(action: openSettings) {
+                    HStack {
+                        Image(systemName: "gear")
+                        Text("前往系统设置")
+                            .fontWeight(.medium)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.accentColor.opacity(0.1))
+                    .foregroundColor(.accentColor)
+                    .cornerRadius(8)
+                }
+                .buttonStyle(.plain)
+                .padding(.top, 4)
+            }
+            .padding(.vertical, 8)
+        } header: {
+            Text("提示")
+        }
+    }
+    
+    private func openSettings() {
+        if let url = URL(string: UIApplication.openSettingsURLString) {
+            UIApplication.shared.open(url)
         }
     }
 }

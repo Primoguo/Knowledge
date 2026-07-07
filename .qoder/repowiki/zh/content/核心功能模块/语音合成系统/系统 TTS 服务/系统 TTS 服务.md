@@ -14,14 +14,17 @@
 - [VoiceSelectView.swift](file://Views/VoiceSelectView.swift)
 - [SettingsView.swift](file://Views/SettingsView.swift)
 - [CosyVoiceSynthesizer.swift](file://Services/CosyVoiceSynthesizer.swift)
+- [SystemVoiceManager.swift](file://Services/SystemVoiceManager.swift)
+- [SystemVoiceSelectView.swift](file://Views/SystemVoiceSelectView.swift)
 </cite>
 
 ## 更新摘要
 **所做更改**
-- 新增 legacySystem TTS 引擎选项，提供向后兼容性支持旧版本 iOS
-- 改进 iOS 16 兼容性，移除已弃用的 AVSpeechUtterance.quality 属性
-- 增强 SpeakerViewModel 中的引擎验证逻辑
-- 更新语音配置管理以支持新的引擎类型
+- 新增 SpeakerViewModel 100ms 去抖机制防止过度 UI 更新，优化高亮跟随性能
+- VoiceConfig 增强引擎支持检测逻辑，改进 iOS 版本兼容性处理
+- 完善 TTSEngine 枚举的 isSupported 属性，提供设备兼容性检查
+- 优化 SpeechService 的 iOS 版本兼容性，移除已弃用的 AVSpeechUtterance.quality 属性依赖
+- 增强 SystemVoiceManager 的 Neural TTS 音色选择逻辑
 
 ## 目录
 1. [简介](#简介)
@@ -38,14 +41,14 @@
 ## 简介
 本文件为系统 TTS（文本转语音）服务的综合文档，重点围绕 SpeechService 类如何集成 iOS 系统的 AVSpeechSynthesizer，涵盖语音配置管理、播放状态控制、错误处理机制；解释与 SpeechSynthesizerProtocol 协议的实现关系；文档化所有公共接口与方法的使用方式；并包含系统语音特性、语言支持、语速调节、音调设置等配置选项的具体实现。同时提供性能优化建议与常见问题解决方案，帮助开发者快速理解与扩展系统 TTS 能力。
 
-**更新** 新增了 legacySystem 引擎选项以提供更好的向后兼容性，改进了 iOS 16 的兼容性支持，并增强了引擎验证逻辑。
+**更新** 新增了 100ms 去抖机制优化 UI 更新性能，增强了引擎支持检测逻辑和 iOS 版本兼容性处理，改进了高亮跟随的性能表现。
 
 ## 项目结构
 TTS 相关代码主要分布在 Services、Models、ViewModels、Views 四个层次：
-- Services：SpeechService（系统 TTS 引擎）、SpeechSynthesizerProtocol（抽象协议）、AudioSessionService（音频会话）、LanguageDetector（语言检测）、ErrorHandler（错误处理）、CosyVoiceSynthesizer（AI 语音引擎）
+- Services：SpeechService（系统 TTS 引擎）、SpeechSynthesizerProtocol（抽象协议）、AudioSessionService（音频会话）、LanguageDetector（语言检测）、ErrorHandler（错误处理）、CosyVoiceSynthesizer（AI 语音引擎）、SystemVoiceManager（系统音色管理）
 - Models：VoiceConfig（语音配置）、PlaybackState（播放状态）
 - ViewModels：SpeakerViewModel（门面层，统一编排播放、配置、远程控制等）
-- Views：PlayerControlsView（播放控制 UI）、VoiceSelectView（音色选择 UI）、SettingsView（设置界面）
+- Views：PlayerControlsView（播放控制 UI）、VoiceSelectView（音色选择 UI）、SettingsView（设置界面）、SystemVoiceSelectView（系统音色选择）
 
 ```mermaid
 graph TB
@@ -53,6 +56,7 @@ subgraph "视图层"
 PCV["PlayerControlsView"]
 VSV["VoiceSelectView"]
 SV["SettingsView"]
+SVS["SystemVoiceSelectView"]
 end
 subgraph "视图模型层"
 SVM["SpeakerViewModel"]
@@ -64,6 +68,7 @@ CSV["CosyVoiceSynthesizer(AI引擎)"]
 AS["AudioSessionService"]
 LD["LanguageDetector"]
 EH["ErrorHandler"]
+SVMgr["SystemVoiceManager"]
 end
 subgraph "模型层"
 VC["VoiceConfig"]
@@ -73,12 +78,14 @@ end
 PCV --> SVM
 VSV --> SVM
 SV --> SVM
+SVS --> SVM
 SVM --> SSP
 SS --> SSP
 CSV --> SSP
 SVM --> AS
 SVM --> EH
 SVM --> LD
+SVM --> SVMgr
 SS --> PS
 SS --> VC
 CSV --> VC
@@ -88,18 +95,22 @@ TEE --> VC
 **图表来源**
 - [SpeechService.swift:1-166](file://Services/SpeechService.swift#L1-L166)
 - [SpeechSynthesizerProtocol.swift:1-20](file://Services/SpeechSynthesizerProtocol.swift#L1-L20)
-- [SpeakerViewModel.swift:1-384](file://ViewModels/SpeakerViewModel.swift#L1-L384)
-- [VoiceConfig.swift:1-64](file://Models/VoiceConfig.swift#L1-L64)
-- [SettingsView.swift:40-72](file://Views/SettingsView.swift#L40-L72)
+- [SpeakerViewModel.swift:1-399](file://ViewModels/SpeakerViewModel.swift#L1-L399)
+- [VoiceConfig.swift:1-71](file://Models/VoiceConfig.swift#L1-L71)
+- [SettingsView.swift:40-237](file://Views/SettingsView.swift#L40-L237)
 - [CosyVoiceSynthesizer.swift:1-258](file://Services/CosyVoiceSynthesizer.swift#L1-L258)
+- [SystemVoiceManager.swift:1-91](file://Services/SystemVoiceManager.swift#L1-L91)
+- [SystemVoiceSelectView.swift:1-69](file://Views/SystemVoiceSelectView.swift#L1-L69)
 
 **章节来源**
 - [SpeechService.swift:1-166](file://Services/SpeechService.swift#L1-L166)
 - [SpeechSynthesizerProtocol.swift:1-20](file://Services/SpeechSynthesizerProtocol.swift#L1-L20)
-- [SpeakerViewModel.swift:1-384](file://ViewModels/SpeakerViewModel.swift#L1-L384)
-- [VoiceConfig.swift:1-64](file://Models/VoiceConfig.swift#L1-L64)
-- [SettingsView.swift:40-72](file://Views/SettingsView.swift#L40-L72)
+- [SpeakerViewModel.swift:1-399](file://ViewModels/SpeakerViewModel.swift#L1-L399)
+- [VoiceConfig.swift:1-71](file://Models/VoiceConfig.swift#L1-L71)
+- [SettingsView.swift:40-237](file://Views/SettingsView.swift#L40-L237)
 - [CosyVoiceSynthesizer.swift:1-258](file://Services/CosyVoiceSynthesizer.swift#L1-L258)
+- [SystemVoiceManager.swift:1-91](file://Services/SystemVoiceManager.swift#L1-L91)
+- [SystemVoiceSelectView.swift:1-69](file://Views/SystemVoiceSelectView.swift#L1-L69)
 
 ## 核心组件
 - SpeechService：基于 AVSpeechSynthesizer 的系统 TTS 实现，负责分块朗读、断点续读、跳转、暂停/恢复/停止、位置与范围回调、错误回调。
@@ -108,23 +119,25 @@ TEE --> VC
 - VoiceConfig：封装语速、音调、音量、语言、引擎类型、克隆/预设音色 ID 等配置项。
 - TTSEngine：新增的引擎枚举，支持 system（iOS 17+ Neural TTS）、legacySystem（传统系统 TTS）、knowledgeVoice（AI 云端）三种引擎类型。
 - PlaybackState：描述 idle、playing、paused、finished 四种播放状态。
-- SpeakerViewModel：门面层，协调 AudioSession、NowPlaying、错误处理、语言检测与引擎切换，对外暴露统一的播放控制与配置更新接口。
+- SpeakerViewModel：门面层，协调 AudioSession、NowPlaying、错误处理、语言检测与引擎切换，对外暴露统一的播放控制与配置更新接口。**新增** 100ms 去抖机制优化 UI 更新性能。
 - AudioSessionService：统一管理 AVAudioSession 的类别、模式、激活与停用，确保后台播放、蓝牙、AirPlay 可用。
 - LanguageDetector：自动检测文档主导语言，匹配系统可用语音并优选高质量音色。
 - ErrorHandler：集中记录错误与弹窗提示。
+- SystemVoiceManager：管理 iOS 17+ Neural TTS 音色选择和推荐逻辑。
 
-**更新** 新增了 TTSEngine 枚举和 CosyVoiceSynthesizer 引擎，提供了更灵活的引擎选择和更好的兼容性支持。
+**更新** 新增了 100ms 去抖机制和 SystemVoiceManager，提供了更好的 UI 性能和更智能的音色选择。
 
 **章节来源**
 - [SpeechService.swift:1-166](file://Services/SpeechService.swift#L1-L166)
 - [CosyVoiceSynthesizer.swift:1-258](file://Services/CosyVoiceSynthesizer.swift#L1-L258)
 - [SpeechSynthesizerProtocol.swift:1-20](file://Services/SpeechSynthesizerProtocol.swift#L1-L20)
-- [VoiceConfig.swift:1-64](file://Models/VoiceConfig.swift#L1-L64)
+- [VoiceConfig.swift:1-71](file://Models/VoiceConfig.swift#L1-L71)
 - [PlaybackState.swift:1-9](file://Models/PlaybackState.swift#L1-L9)
-- [SpeakerViewModel.swift:1-384](file://ViewModels/SpeakerViewModel.swift#L1-L384)
+- [SpeakerViewModel.swift:1-399](file://ViewModels/SpeakerViewModel.swift#L1-L399)
 - [AudioSessionService.swift:1-46](file://Services/AudioSessionService.swift#L1-L46)
 - [LanguageDetector.swift:1-83](file://Services/LanguageDetector.swift#L1-L83)
 - [ErrorHandler.swift:1-53](file://Services/ErrorHandler.swift#L1-L53)
+- [SystemVoiceManager.swift:1-91](file://Services/SystemVoiceManager.swift#L1-L91)
 
 ## 架构总览
 系统采用"协议 + 多实现"的解耦设计：
@@ -133,6 +146,7 @@ TEE --> VC
 - AudioSessionService 保证音频会话正确配置与生命周期管理。
 - LanguageDetector 在加载文档时自动匹配最佳系统语音。
 - TTSEngine 枚举提供引擎类型管理和设备兼容性检查。
+- **新增** SystemVoiceManager 提供智能的 Neural TTS 音色推荐和选择功能。
 
 ```mermaid
 classDiagram
@@ -195,6 +209,7 @@ class CosyVoiceSynthesizer {
 class SpeakerViewModel {
 +state : PlaybackState
 +voiceConfig : VoiceConfig
++highlightDebounceTimer : Timer?
 +play()
 +pause()
 +stop()
@@ -205,6 +220,12 @@ class SpeakerViewModel {
 +seekTo(progress)
 +updateConfig(config)
 +switchEngine(to)
+}
+class SystemVoiceManager {
++availableChineseVoices : [AVSpeechSynthesisVoice]
++availableEnglishVoices : [AVSpeechSynthesisVoice]
++recommendedVoice(for) : AVSpeechSynthesisVoice?
++isNeuralVoice(identifier) : Bool
 }
 class AudioSessionService {
 +configure()
@@ -220,19 +241,22 @@ CosyVoiceSynthesizer ..|> SpeechSynthesizerProtocol
 SpeakerViewModel --> SpeechSynthesizerProtocol : "依赖"
 SpeakerViewModel --> AudioSessionService : "使用"
 SpeakerViewModel --> LanguageDetector : "使用"
+SpeakerViewModel --> SystemVoiceManager : "使用"
 SpeechService --> VoiceConfig : "读取"
 CosyVoiceSynthesizer --> VoiceConfig : "读取"
 SpeechService --> PlaybackState : "维护"
 CosyVoiceSynthesizer --> PlaybackState : "维护"
 VoiceConfig --> TTSEngine : "包含"
+SystemVoiceManager --> AVSpeechSynthesisVoice : "管理"
 ```
 
 **图表来源**
 - [SpeechSynthesizerProtocol.swift:1-20](file://Services/SpeechSynthesizerProtocol.swift#L1-L20)
-- [VoiceConfig.swift:5-34](file://Models/VoiceConfig.swift#L5-L34)
+- [VoiceConfig.swift:5-71](file://Models/VoiceConfig.swift#L5-L71)
 - [SpeechService.swift:1-166](file://Services/SpeechService.swift#L1-L166)
 - [CosyVoiceSynthesizer.swift:1-258](file://Services/CosyVoiceSynthesizer.swift#L1-L258)
-- [SpeakerViewModel.swift:1-384](file://ViewModels/SpeakerViewModel.swift#L1-L384)
+- [SpeakerViewModel.swift:1-399](file://ViewModels/SpeakerViewModel.swift#L1-L399)
+- [SystemVoiceManager.swift:1-91](file://Services/SystemVoiceManager.swift#L1-L91)
 - [AudioSessionService.swift:1-46](file://Services/AudioSessionService.swift#L1-L46)
 - [LanguageDetector.swift:1-83](file://Services/LanguageDetector.swift#L1-L83)
 - [PlaybackState.swift:1-9](file://Models/PlaybackState.swift#L1-L9)
@@ -240,7 +264,7 @@ VoiceConfig --> TTSEngine : "包含"
 ## 详细组件分析
 
 ### TTSEngine 引擎枚举与兼容性管理
-**新增** TTSEngine 枚举定义了三种不同的 TTS 引擎类型：
+**更新** TTSEngine 枚举定义了三种不同的 TTS 引擎类型，并增强了设备兼容性检查：
 - `system`：iOS 17+ Neural TTS（默认），提供神经网络增强的自然音质
 - `legacySystem`：传统系统 TTS，用于兼容旧版本 iOS 设备
 - `knowledgeVoice`：AI 云端合成，支持语音克隆和高级功能
@@ -248,7 +272,7 @@ VoiceConfig --> TTSEngine : "包含"
 每个引擎都有对应的显示名称、描述信息和设备支持检查：
 - `displayName`：用户友好的引擎名称
 - `description`：详细的引擎说明
-- `isSupported`：根据 iOS 版本动态检查引擎可用性
+- `isSupported`：根据 iOS 版本动态检查引擎可用性，Apple Neural TTS 需要 iOS 17+
 
 ```mermaid
 flowchart TD
@@ -264,11 +288,41 @@ ValidateSupport --> |不支持| UseDefault["使用默认引擎"]
 ```
 
 **图表来源**
-- [VoiceConfig.swift:5-34](file://Models/VoiceConfig.swift#L5-L34)
-- [SpeakerViewModel.swift:66-93](file://ViewModels/SpeakerViewModel.swift#L66-L93)
+- [VoiceConfig.swift:5-41](file://Models/VoiceConfig.swift#L5-L41)
+- [SpeakerViewModel.swift:69-95](file://ViewModels/SpeakerViewModel.swift#L69-L95)
 
 **章节来源**
-- [VoiceConfig.swift:5-34](file://Models/VoiceConfig.swift#L5-L34)
+- [VoiceConfig.swift:5-41](file://Models/VoiceConfig.swift#L5-L41)
+
+### SpeakerViewModel 去抖机制与性能优化
+**新增** SpeakerViewModel 实现了 100ms 去抖机制来优化 UI 更新性能：
+- 使用 `highlightDebounceTimer` 定时器避免频繁的高亮更新
+- 在高亮范围变化时取消之前的定时器并设置新的 100ms 延迟更新
+- 显著减少 UI 刷新频率，提升长文本朗读时的流畅度
+
+```mermaid
+sequenceDiagram
+participant SS as "SpeechService"
+participant VM as "SpeakerViewModel"
+participant Timer as "去抖定时器"
+participant UI as "UI渲染"
+loop 高频范围更新
+SS->>VM : onRangeChange(range)
+VM->>Timer : invalidate() 取消之前定时器
+VM->>Timer : scheduledTimer(100ms)
+end
+Timer-->>VM : 100ms后触发
+VM->>VM : highlightRange = range
+VM->>UI : 批量更新UI
+```
+
+**图表来源**
+- [SpeakerViewModel.swift:50-51](file://ViewModels/SpeakerViewModel.swift#L50-L51)
+- [SpeakerViewModel.swift:305-316](file://ViewModels/SpeakerViewModel.swift#L305-L316)
+
+**章节来源**
+- [SpeakerViewModel.swift:50-51](file://ViewModels/SpeakerViewModel.swift#L50-L51)
+- [SpeakerViewModel.swift:305-316](file://ViewModels/SpeakerViewModel.swift#L305-L316)
 
 ### SpeechService 与 AVSpeechSynthesizer 集成
 - 初始化与委托：创建 AVSpeechSynthesizer 实例并设置自身为代理，析构时清理代理并立即停止播放。
@@ -280,14 +334,14 @@ ValidateSupport --> |不支持| UseDefault["使用默认引擎"]
   - skipForward/skipBackward 基于 charsPerSecond 估算跳过的字符数，停止后延迟一小段时间再重新从新位置开始朗读，避免竞态。
 - 系统语音特性：
   - 根据 VoiceConfig 设置 utterance.rate、utterance.pitchMultiplier、utterance.volume。
-  - **更新** 移除了已弃用的 AVSpeechUtterance.quality 属性，改用条件编译支持 iOS 17+ 和旧版本的兼容性。
+  - **更新** 移除了对已弃用的 AVSpeechUtterance.quality 属性的依赖，改用条件编译支持 iOS 17+ 和旧版本的兼容性。
   - 若配置了 voiceIdentifier，则使用指定 AVSpeechSynthesisVoice(identifier:)；否则按 language 构造语音。
 - 完成与继续：
   - didFinish 回调中计算下一段起始位置，若未结束则继续调用 speak 实现无缝续读；若结束则触发 finished 状态与位置回调。
 - 错误处理：
   - 当前实现未直接抛出错误，但预留 onError 回调用于上层监听不可恢复错误（例如未来扩展或网络引擎）。
 
-**更新** 改进了 iOS 16 兼容性，移除了已弃用的 quality 属性，使用条件编译确保在不同 iOS 版本上的稳定运行。
+**更新** 改进了 iOS 版本兼容性，移除了已弃用的 quality 属性依赖，使用条件编译确保在不同 iOS 版本上的稳定运行。
 
 ```mermaid
 sequenceDiagram
@@ -319,7 +373,7 @@ end
 **图表来源**
 - [SpeechService.swift:30-83](file://Services/SpeechService.swift#L30-L83)
 - [SpeechService.swift:129-143](file://Services/SpeechService.swift#L129-L143)
-- [SpeakerViewModel.swift:285-336](file://ViewModels/SpeakerViewModel.swift#L285-L336)
+- [SpeakerViewModel.swift:296-332](file://ViewModels/SpeakerViewModel.swift#L296-L332)
 
 **章节来源**
 - [SpeechService.swift:1-166](file://Services/SpeechService.swift#L1-L166)
@@ -349,10 +403,36 @@ RestartPlay --> Complete
 ```
 
 **图表来源**
-- [SpeakerViewModel.swift:66-93](file://ViewModels/SpeakerViewModel.swift#L66-L93)
+- [SpeakerViewModel.swift:69-95](file://ViewModels/SpeakerViewModel.swift#L69-L95)
 
 **章节来源**
-- [SpeakerViewModel.swift:66-93](file://ViewModels/SpeakerViewModel.swift#L66-L93)
+- [SpeakerViewModel.swift:69-95](file://ViewModels/SpeakerViewModel.swift#L69-L95)
+
+### SystemVoiceManager 智能音色选择
+**新增** SystemVoiceManager 提供智能的 Neural TTS 音色管理功能：
+- 获取特定语言的可用 Neural 音色列表（中文、英文）
+- 根据语言代码推荐最佳音色，优先选择 Enhanced 或 Premium 质量
+- 检查指定标识符是否为 Neural 音色
+- 提供 SystemVoiceInfo 结构体用于 UI 展示
+
+```mermaid
+flowchart TD
+LoadVoices["加载系统音色"] --> FilterByLang["按语言过滤"]
+FilterByLang --> CheckQuality{"检查音质等级"}
+CheckQuality --> |Enhanced/Premium| Prioritize["优先推荐"]
+CheckQuality --> |Default| Include["包含在列表中"]
+Prioritize --> SortVoices["排序并返回"]
+Include --> SortVoices
+SortVoices --> UI["UI展示"]
+```
+
+**图表来源**
+- [SystemVoiceManager.swift:29-58](file://Services/SystemVoiceManager.swift#L29-L58)
+- [SystemVoiceSelectView.swift:65-69](file://Views/SystemVoiceSelectView.swift#L65-L69)
+
+**章节来源**
+- [SystemVoiceManager.swift:1-91](file://Services/SystemVoiceManager.swift#L1-L91)
+- [SystemVoiceSelectView.swift:1-69](file://Views/SystemVoiceSelectView.swift#L1-L69)
 
 ### SpeechSynthesizerProtocol 协议与实现关系
 - 协议职责：
@@ -399,6 +479,7 @@ CosyVoiceSynthesizer ..|> SpeechSynthesizerProtocol
 - 位置与范围：
   - onPositionChange：实时推送当前绝对位置，用于进度条与时间显示。
   - onRangeChange：推送当前朗读的 NSRange（相对全文），用于文本高亮跟随。
+  - **更新** 现在通过 100ms 去抖机制优化高亮更新的性能。
 - 错误回调：
   - onError：当引擎发生不可恢复错误时通知上层，用于降级或提示用户。
 
@@ -411,7 +492,8 @@ Valid --> |是| Chunk["计算 chunk 与 natural break"]
 Chunk --> SetRange["设置 currentRange"]
 SetRange --> Speak["调用 AVSpeechSynthesizer.speak"]
 Speak --> WillSpeak["willSpeakRangeOfSpeechString"]
-WillSpeak --> UpdatePos["onPositionChange/onRangeChange"]
+WillSpeak --> Debounce["100ms 去抖处理"]
+Debounce --> UpdatePos["onPositionChange/onRangeChange"]
 UpdatePos --> DidFinish["didFinish"]
 DidFinish --> NextCheck{"是否到末尾?"}
 NextCheck --> |是| EndFinish["更新位置为 totalLength<br/>状态=finished"]
@@ -421,9 +503,11 @@ NextCheck --> |否| Continue["继续 speak(nextPosition)"]
 **图表来源**
 - [SpeechService.swift:30-83](file://Services/SpeechService.swift#L30-L83)
 - [SpeechService.swift:129-143](file://Services/SpeechService.swift#L129-L143)
+- [SpeakerViewModel.swift:305-316](file://ViewModels/SpeakerViewModel.swift#L305-L316)
 
 **章节来源**
 - [SpeechService.swift:1-166](file://Services/SpeechService.swift#L1-L166)
+- [SpeakerViewModel.swift:305-316](file://ViewModels/SpeakerViewModel.swift#L305-L316)
 
 ### 语音配置管理与语言支持
 - VoiceConfig 关键属性：
@@ -432,7 +516,7 @@ NextCheck --> |否| Continue["继续 speak(nextPosition)"]
   - volume：音量（默认 1.0）。
   - language：语言代码（默认 zh-CN）。
   - voiceIdentifier：指定系统语音标识符（可选）。
-  - **更新** engine：引擎类型（system/knowledgeVoice/legacySystem）。
+  - **更新** engine：引擎类型（system/knowledgeVoice/legacySystem），带有设备兼容性检查。
   - clonedVoiceId/presetVoiceId：AI 引擎的音色标识（系统引擎不使用）。
 - 语言检测与自动匹配：
   - LanguageDetector 使用 NSLinguisticTagger 检测主导语言，映射到目标语言代码。
@@ -458,11 +542,11 @@ Fallback --> Finalize
 
 **图表来源**
 - [LanguageDetector.swift:46-76](file://Services/LanguageDetector.swift#L46-L76)
-- [VoiceConfig.swift:36-63](file://Models/VoiceConfig.swift#L36-L63)
+- [VoiceConfig.swift:43-71](file://Models/VoiceConfig.swift#L43-L71)
 
 **章节来源**
 - [LanguageDetector.swift:1-83](file://Services/LanguageDetector.swift#L1-L83)
-- [VoiceConfig.swift:1-64](file://Models/VoiceConfig.swift#L1-L64)
+- [VoiceConfig.swift:1-71](file://Models/VoiceConfig.swift#L1-L71)
 
 ### 音频会话与系统集成
 - AudioSessionService 负责：
@@ -472,7 +556,7 @@ Fallback --> Finalize
 
 **章节来源**
 - [AudioSessionService.swift:1-46](file://Services/AudioSessionService.swift#L1-L46)
-- [SpeakerViewModel.swift:125-146](file://ViewModels/SpeakerViewModel.swift#L125-L146)
+- [SpeakerViewModel.swift:134-155](file://ViewModels/SpeakerViewModel.swift#L134-L155)
 
 ### 错误处理与降级策略
 - 全局错误处理：
@@ -486,7 +570,7 @@ Fallback --> Finalize
 
 **章节来源**
 - [ErrorHandler.swift:1-53](file://Services/ErrorHandler.swift#L1-L53)
-- [SpeakerViewModel.swift:303-317](file://ViewModels/SpeakerViewModel.swift#L303-L317)
+- [SpeakerViewModel.swift:318-332](file://ViewModels/SpeakerViewModel.swift#L318-L332)
 - [SpeechService.swift:1-166](file://Services/SpeechService.swift#L1-L166)
 
 ### UI 集成与使用方式
@@ -499,17 +583,22 @@ Fallback --> Finalize
 - **更新** SettingsView：
   - 提供引擎选择界面，根据设备兼容性动态显示可用的引擎选项。
   - 支持实时切换引擎并立即生效。
+- **新增** SystemVoiceSelectView：
+  - 专门用于 iOS 17+ 的 Neural TTS 音色选择。
+  - 区分推荐音色和全部音色，提供更好的用户体验。
 
 **章节来源**
 - [PlayerControlsView.swift:1-65](file://Views/PlayerControlsView.swift#L1-L65)
 - [VoiceSelectView.swift:1-215](file://Views/VoiceSelectView.swift#L1-L215)
-- [SettingsView.swift:40-72](file://Views/SettingsView.swift#L40-L72)
+- [SettingsView.swift:40-237](file://Views/SettingsView.swift#L40-L237)
+- [SystemVoiceSelectView.swift:1-69](file://Views/SystemVoiceSelectView.swift#L1-L69)
 
 ## 依赖关系分析
 - 耦合与内聚：
   - SpeechService 仅依赖 AVFoundation 与内部模型（VoiceConfig、PlaybackState），内聚度高。
   - CosyVoiceSynthesizer 依赖 CosyVoiceService 进行云端合成。
   - SpeakerViewModel 聚合多个服务，承担编排职责，符合门面模式。
+  - **新增** SystemVoiceManager 独立管理系统音色选择逻辑。
 - 外部依赖：
   - AVFoundation：AVSpeechSynthesizer、AVAudioSession、AVSpeechSynthesisVoice。
   - Foundation：NSLinguisticTagger、UserDefaults、JSONEncoder/Decoder。
@@ -528,22 +617,25 @@ SVM["SpeakerViewModel"] --> SSP["SpeechSynthesizerProtocol"]
 SVM --> AS["AudioSessionService"]
 SVM --> LD["LanguageDetector"]
 SVM --> EH["ErrorHandler"]
+SVM --> SVMgr["SystemVoiceManager"]
 TEE["TTSEngine"] --> VC
+SVMgr --> AVSpeech["AVSpeechSynthesisVoice"]
 ```
 
 **图表来源**
 - [SpeechService.swift:1-166](file://Services/SpeechService.swift#L1-L166)
 - [CosyVoiceSynthesizer.swift:1-258](file://Services/CosyVoiceSynthesizer.swift#L1-L258)
-- [SpeakerViewModel.swift:1-384](file://ViewModels/SpeakerViewModel.swift#L1-L384)
-- [VoiceConfig.swift:1-64](file://Models/VoiceConfig.swift#L1-L64)
+- [SpeakerViewModel.swift:1-399](file://ViewModels/SpeakerViewModel.swift#L1-L399)
+- [VoiceConfig.swift:1-71](file://Models/VoiceConfig.swift#L1-L71)
 - [AudioSessionService.swift:1-46](file://Services/AudioSessionService.swift#L1-L46)
 - [LanguageDetector.swift:1-83](file://Services/LanguageDetector.swift#L1-L83)
 - [ErrorHandler.swift:1-53](file://Services/ErrorHandler.swift#L1-L53)
+- [SystemVoiceManager.swift:1-91](file://Services/SystemVoiceManager.swift#L1-L91)
 
 **章节来源**
 - [SpeechService.swift:1-166](file://Services/SpeechService.swift#L1-L166)
 - [CosyVoiceSynthesizer.swift:1-258](file://Services/CosyVoiceSynthesizer.swift#L1-L258)
-- [SpeakerViewModel.swift:1-384](file://ViewModels/SpeakerViewModel.swift#L1-L384)
+- [SpeakerViewModel.swift:1-399](file://ViewModels/SpeakerViewModel.swift#L1-L399)
 
 ## 性能与优化建议
 - 分块大小与自然断点：
@@ -558,7 +650,9 @@ TEE["TTSEngine"] --> VC
   - 使用 spokenAudio 模式确保中断与后台行为符合预期；在多任务场景下注意与其他音频应用的焦点协商。
 - 线程与主队列：
   - 状态更新与 UI 回调均在主队列执行，避免并发问题；如需批量更新，可合并回调减少 UI 刷新频率。
-- **更新** 引擎切换优化：
+- **新增** 去抖机制优化：
+  - 100ms 去抖机制有效减少了高亮更新的频率，显著提升长文本朗读时的 UI 性能。
+- **新增** 引擎切换优化：
   - 引擎切换时使用异步操作避免阻塞主线程，切换完成后自动恢复播放状态。
 
 [本节为通用指导，不直接分析具体文件]
@@ -574,20 +668,25 @@ TEE["TTSEngine"] --> VC
   - 检查 charsPerSecond 与实际语速是否匹配；必要时调整估算系数或引入更精确的时间追踪。
 - 错误处理与降级：
   - 观察 onError 回调是否触发；AI 引擎错误时应自动降级到系统 TTS，确认配置已保存且绑定已重建。
-- **更新** 引擎兼容性问题：
+- **新增** 引擎兼容性问题：
   - 检查 TTSEngine.isSupported 返回值，确保在不支持的 iOS 版本上不会尝试使用 Neural TTS。
   - 如果引擎切换失败，查看控制台日志中的警告信息。
+- **新增** UI 性能问题：
+  - 如果高亮更新仍然卡顿，检查 100ms 去抖机制是否正常工作。
+  - 确认 highlightDebounceTimer 没有被意外释放或重复创建。
 
 **章节来源**
 - [AudioSessionService.swift:14-44](file://Services/AudioSessionService.swift#L14-L44)
 - [LanguageDetector.swift:46-76](file://Services/LanguageDetector.swift#L46-L76)
-- [SpeakerViewModel.swift:125-173](file://ViewModels/SpeakerViewModel.swift#L125-L173)
+- [SpeakerViewModel.swift:134-182](file://ViewModels/SpeakerViewModel.swift#L134-L182)
 - [SpeechService.swift:103-125](file://Services/SpeechService.swift#L103-L125)
-- [SpeakerViewModel.swift:303-317](file://ViewModels/SpeakerViewModel.swift#L303-L317)
-- [VoiceConfig.swift:26-33](file://Models/VoiceConfig.swift#L26-L33)
+- [SpeakerViewModel.swift:318-332](file://ViewModels/SpeakerViewModel.swift#L318-L332)
+- [VoiceConfig.swift:26-41](file://Models/VoiceConfig.swift#L26-L41)
+- [SpeakerViewModel.swift:50-51](file://ViewModels/SpeakerViewModel.swift#L50-L51)
+- [SpeakerViewModel.swift:305-316](file://ViewModels/SpeakerViewModel.swift#L305-L316)
 
 ## 结论
-SpeechService 通过简洁的分块朗读与断点续读机制，稳定地集成了 iOS 系统 AVSpeechSynthesizer，配合 SpeechSynthesizerProtocol 实现了引擎抽象与多引擎切换。**更新** 新增的 TTSEngine 枚举和 legacySystem 引擎选项提供了更好的向后兼容性，改进了 iOS 16 的兼容性支持，移除了已弃用的 API 调用。SpeakerViewModel 作为门面层，统一管理播放、配置、远程控制与错误降级，提升了整体可维护性与可扩展性。通过合理的语言检测与系统语音优选策略，系统在多语言环境下具备良好的用户体验。建议在后续迭代中引入更精确的时间轴与性能监控，进一步优化跳转与高亮同步体验。
+SpeechService 通过简洁的分块朗读与断点续读机制，稳定地集成了 iOS 系统 AVSpeechSynthesizer，配合 SpeechSynthesizerProtocol 实现了引擎抽象与多引擎切换。**更新** 新增的 100ms 去抖机制显著提升了 UI 更新性能，优化的 TTSEngine 枚举和 legacySystem 引擎选项提供了更好的向后兼容性，改进了 iOS 版本兼容性处理，移除了已弃用的 API 调用。SpeakerViewModel 作为门面层，统一管理播放、配置、远程控制与错误降级，提升了整体可维护性与可扩展性。SystemVoiceManager 的智能音色选择功能为用户提供了更好的体验。通过合理的语言检测与系统语音优选策略，系统在多语言环境下具备良好的用户体验。建议在后续迭代中引入更精确的时间轴与性能监控，进一步优化跳转与高亮同步体验。
 
 [本节为总结，不直接分析具体文件]
 
@@ -611,7 +710,7 @@ SpeechService 通过简洁的分块朗读与断点续读机制，稳定地集成
 - [SpeechSynthesizerProtocol.swift:1-20](file://Services/SpeechSynthesizerProtocol.swift#L1-L20)
 
 ### TTSEngine 引擎类型
-**新增** 支持的引擎类型：
+**更新** 支持的引擎类型：
 - `system`：Apple Neural TTS（iOS 17+），提供神经网络增强的自然音质
 - `legacySystem`：传统系统 TTS，兼容旧版本 iOS
 - `knowledgeVoice`：Knowledge Voice（AI 云端），支持语音克隆和高级功能
@@ -619,10 +718,36 @@ SpeechService 通过简洁的分块朗读与断点续读机制，稳定地集成
 每个引擎的属性：
 - displayName：用户友好的显示名称
 - description：详细的引擎描述
-- isSupported：设备兼容性检查
+- isSupported：设备兼容性检查，Apple Neural TTS 需要 iOS 17+
 
 **章节来源**
-- [VoiceConfig.swift:5-34](file://Models/VoiceConfig.swift#L5-L34)
+- [VoiceConfig.swift:5-41](file://Models/VoiceConfig.swift#L5-L41)
+
+### SpeakerViewModel 去抖机制
+**新增** 100ms 去抖机制的实现细节：
+- 使用 `highlightDebounceTimer` 定时器管理高亮更新
+- 每次收到 onRangeChange 回调时先取消之前的定时器
+- 设置新的 100ms 延迟定时器来更新 UI
+- 有效减少高频 UI 更新带来的性能开销
+
+```swift
+// 去抖机制核心实现
+synthesizer.onRangeChange = { [weak self] range in
+    Task { @MainActor in
+        guard let self else { return }
+        // 取消之前的定时器
+        self.highlightDebounceTimer?.invalidate()
+        // 设置新的防抖定时器（100ms 后更新 UI）
+        self.highlightDebounceTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: false) { _ in
+            self.highlightRange = range
+        }
+    }
+}
+```
+
+**章节来源**
+- [SpeakerViewModel.swift:50-51](file://ViewModels/SpeakerViewModel.swift#L50-L51)
+- [SpeakerViewModel.swift:305-316](file://ViewModels/SpeakerViewModel.swift#L305-L316)
 
 ### SpeechService 使用要点
 - 初始化后无需额外配置，直接调用 speak 即可开始朗读。
@@ -641,11 +766,29 @@ SpeechService 通过简洁的分块朗读与断点续读机制，稳定地集成
 - volume：音量（默认 1.0）
 - language：语言代码（默认 zh-CN）
 - voiceIdentifier：指定系统语音标识符（可选）
-- **更新** engine：引擎类型（system/knowledgeVoice/legacySystem）
+- **更新** engine：引擎类型（system/knowledgeVoice/legacySystem），带有设备兼容性检查
 - clonedVoiceId/presetVoiceId：AI 引擎的音色标识（系统引擎不使用）
 
 **章节来源**
-- [VoiceConfig.swift:36-63](file://Models/VoiceConfig.swift#L36-L63)
+- [VoiceConfig.swift:43-71](file://Models/VoiceConfig.swift#L43-L71)
+
+### SystemVoiceManager 使用方法
+**新增** 智能音色管理功能：
+- 获取特定语言的可用 Neural 音色列表
+- 根据语言代码推荐最佳音色
+- 检查指定标识符是否为 Neural 音色
+- 提供 SystemVoiceInfo 结构体用于 UI 展示
+
+```swift
+// 使用示例
+let manager = SystemVoiceManager.shared
+let chineseVoices = manager.availableChineseVoices
+let recommendedVoice = manager.recommendedVoice(for: "zh-CN")
+let isNeural = manager.isNeuralVoice(identifier: "some-identifier")
+```
+
+**章节来源**
+- [SystemVoiceManager.swift:1-91](file://Services/SystemVoiceManager.swift#L1-L91)
 
 ### SpeakerViewModel 典型用法
 - 播放控制
@@ -656,8 +799,10 @@ SpeechService 通过简洁的分块朗读与断点续读机制，稳定地集成
   - **更新** switchEngine(to engine)：运行时切换引擎并保存配置，支持设备兼容性检查
 - 事件绑定
   - setupBindings 中订阅 onPositionChange/onRangeChange/onError，并同步到 @Published 属性供 UI 使用
+  - **新增** 100ms 去抖机制优化高亮更新性能
 
 **章节来源**
-- [SpeakerViewModel.swift:117-187](file://ViewModels/SpeakerViewModel.swift#L117-L187)
-- [SpeakerViewModel.swift:66-93](file://ViewModels/SpeakerViewModel.swift#L66-L93)
-- [SpeakerViewModel.swift:285-336](file://ViewModels/SpeakerViewModel.swift#L285-L336)
+- [SpeakerViewModel.swift:134-196](file://ViewModels/SpeakerViewModel.swift#L134-L196)
+- [SpeakerViewModel.swift:69-95](file://ViewModels/SpeakerViewModel.swift#L69-L95)
+- [SpeakerViewModel.swift:296-351](file://ViewModels/SpeakerViewModel.swift#L296-L351)
+- [SpeakerViewModel.swift:305-316](file://ViewModels/SpeakerViewModel.swift#L305-L316)

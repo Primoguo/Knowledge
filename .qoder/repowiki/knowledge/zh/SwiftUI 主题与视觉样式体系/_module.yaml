@@ -1,0 +1,11 @@
+schema_version: 1
+module_path: frontend_style
+title: SwiftUI 主题与视觉样式体系
+scope: []
+source_files:
+    - App/KnowledgeApp.swift
+    - Services/ThemeManager.swift
+    - Models/ThemeMode.swift
+    - Resources/Assets.xcassets/AccentColor.colorset/Contents.json
+depends_on: []
+related_to: []

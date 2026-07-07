@@ -4,9 +4,10 @@ title: Xcode 原生构建与手工 pbxproj 脚本（无 CI/自动化）
 scope: []
 source_files:
     - Knowledge.xcodeproj/project.pbxproj
-    - Knowledge.xcodeproj/xcshareddata/xcschemes/Knowledge.xcscheme
     - copy_pbxproj.py
     - fix_pbxproj.py
     - modify_pbxproj.py
+    - Resources/Info.plist
+    - ShareExtension/Info.plist
 depends_on: []
 related_to: []

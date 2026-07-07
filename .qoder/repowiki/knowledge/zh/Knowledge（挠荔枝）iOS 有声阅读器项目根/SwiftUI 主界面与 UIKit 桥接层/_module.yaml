@@ -1,6 +1,6 @@
 schema_version: 1
 module_path: ui
-title: SwiftUI 应用视图层与 UIKit 桥接
+title: SwiftUI 主界面与 UIKit 桥接层
 scope:
     - Views/
     - UIKit/
