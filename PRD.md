@@ -6,7 +6,7 @@
 
 | 项目 | 内容 |
 |------|------|
-| 版本号 | V1.3.0 |
+| 版本号 | V1.4.0 |
 | 状态 | 已生效（持续迭代中） |
 | 创建日期 | 2026-07-05 |
 | 作者 | Primoguo |
@@ -24,6 +24,7 @@
 | V1.1 | 2026-07-05 | AI Agent | 补充三大待开发功能规划 |
 | V1.2 | 2026-07-05 | AI Agent | 移除 Edge TTS 引擎（不可用），后续 TTS 统一使用阿里云 CosyVoice |
 | V1.3 | 2026-07-05 | AI Agent | 新增主题模式功能（跟随系统/白天/暗黑）；项目重命名为 Knowledge；添加 Assets.xcassets |
+| V1.4 | 2026-07-06 | AI Agent | 新增 AI 伴读功能（预埋，默认隐藏）：边听边问的交互式多轮对话，基于通义千问，携带朗读上下文 |
 
 ---
 
@@ -41,6 +42,7 @@
 | **自然语音体验** | 提供系统 TTS，后续接入阿里云 CosyVoice 高品质语音 | ✅ 系统 TTS（离线可用） |
 | **网页正文识别** | 自动过滤导航/广告/推荐，提取正文准确率 ≥ 90% | ✅ 已实现 |
 | **主题模式** | 支持跟随系统、白天、暗黑三种外观模式 | ✅ 已实现 |
+| **AI 伴读** | 边听边问，基于当前朗读位置上下文的多轮对话 | ✅ 已预埋（默认隐藏） |
 | **AI 智能总结** | 用户导入文档后一键获取 AI 摘要 | 🔲 待开发 |
 | **个性化音色** | 用户可录制声音并克隆为自己的朗读音色 | 🔲 待开发 |
 | **AI 播客** | 文档/网页一键转为双人对话播客音频 | 🔲 待开发 |
@@ -72,6 +74,7 @@
 | **阅读高亮** | 当前朗读位置高亮 + 加粗 + 背景色标记 | V1.0 |
 | **锁屏控制** | Now Playing 信息展示 + 远程播放控制 | V1.0 |
 | **主题模式** | 跟随系统 / 白天 / 暗黑三种外观，设置页一键切换，UserDefaults 持久化 | V1.3 |
+| **AI 伴读** | 边听边问，基于朗读上下文的多轮对话，通义千问驱动 | V1.4 |
 | **设置管理** | 引擎选择、语速/音高/音量调节、语言/语音选择、8 档语速预设 | V1.0-V1.2 |
 
 ### 4.2 不包含范围（Out of Scope）
@@ -88,7 +91,7 @@
 | 优先级 | 内容 | 状态 |
 |--------|------|------|
 | **Must** | 多格式导入、文本提取、TTS 朗读、播放控制、书库管理 | ✅ 已完成 |
-| **Should** | 网页正文识别、锁屏控制、主题模式 | ✅ 已完成 |
+| **Should** | 网页正文识别、锁屏控制、主题模式、AI 伴读 | ✅ 已完成 |
 | **Could** | 更多格式支持、更多语言语音 | 部分完成 |
 | **Won't（本期）** | AI 总结、语音克隆、AI 播客、阿里云 CosyVoice TTS 引擎 | 🔲 下期 |
 
@@ -134,6 +137,7 @@
 | US-007 | 用户 | 继续上次阅读 | 不丢失阅读进度 | 1. 书库按最近打开排序<br>2. 重新打开从上次位置继续 |
 | US-008 | 用户 | 导入 EPUB 电子书 | 把电子书转成有声书 | 1. 纯 Swift ZIP 解压<br>2. 正确解析 spine 顺序<br>3. 保留章节结构 |
 | US-009 | 用户 | 切换主题模式 | 在白天/暗黑/跟随系统间切换 | 1. 设置页一键切换<br>2. 实时生效<br>3. 偏好持久化保存 |
+| US-010 | 用户 | 边听边问 AI 伴读 | 听到不懂的内容随时提问 | 1. 播放器左上角💬按钮打开伴读（默认隐藏）<br>2. 进入时自动暂停朗读，退出时自动恢复<br>3. 支持多轮对话，携带当前朗读位置上下文 |
 
 ### 6.2 待实现
 
@@ -304,7 +308,71 @@ KnowledgeApp.preferredColorScheme 响应 → 全局 ColorScheme 切换
 5. 所有视图颜色使用 .accentColor，确保主题切换后颜色一致性
 6. 高亮文本、进度条、按钮等交互元素在暗色模式下对比度充足
 
-### 7.6 设置管理
+### 7.6 AI 伴读（预埋功能，默认隐藏）
+
+| 维度 | 内容 |
+|------|------|
+| **需求类型（KANO）** | 兴奋型 — 边听边问的差异化体验 |
+| **目标** | 用户在朗读过程中随时向 AI 提问，基于当前朗读位置的上下文进行多轮对话，获得类似朋友陪读的体验 |
+| **当前状态** | 已实现并预埋，默认隐藏（`enableCompanion = false`），后续开启开关即可上线 |
+| **技术方案** | 通义千问 qwen-plus（HTTP REST），携带朗读上下文，多轮对话历史（最多 10 轮） |
+
+#### 实现内容
+
+```
+新增文件：
+├── Services/CompanionService.swift      # AI 伴读网络层（单例）
+│   ├── ask(question:context:)              # 向 AI 提问，携带朗读上下文
+│   └── resetConversation()                # 重置对话历史（切换文档时调用）
+├── Views/CompanionView.swift             # 伴读对话视图（Sheet 弹出）
+└── Models/CompanionMessage.swift          # 对话消息模型（Identifiable）
+
+修改文件：
+├── ViewModels/SpeakerViewModel.swift      # 功能开关 + askCompanion/resetCompanion 方法
+└── Views/PlayerView.swift               # 左上角💬按钮 + Sheet 弹出伴读视图
+```
+
+#### 交互流程
+
+```
+播放器页面 → 左上角💬气泡按钮（仅 enableCompanion = true 时显示）
+    ↓
+以 Sheet 弹出 CompanionView
+    ↓
+进入时：若正在朗读，自动暂停（companionPausedPlay 标记）
+    ↓
+欢迎界面（对话为空时）：
+    ├── 图标 + 欢迎文案
+    └── 快捷问题按钮：「这段讲了什么？」「解释一下关键概念」
+    ↓
+用户输入问题 / 点击快捷按钮
+    ↓
+调用 CompanionService.ask(question:context:)
+    ├── 提取当前朗读位置前后 500 字作为上下文
+    ├── 构建 system prompt（注入上下文 + 定义伴读角色）
+    ├── 拼接多轮对话历史（最多 10 轮）
+    └── 调用通义千问 qwen-plus API
+    ↓
+显示回复（气泡样式，用户蓝色右对齐 / AI 灰色左对齐）
+    ↓
+退出伴读：点击「继续听」或下滑关闭
+    ↓
+若进入时暂停了朗读，自动恢复播放
+```
+
+#### 验收标准
+1. `enableCompanion = false` 时播放器不显示伴读按钮，功能完全不可见
+2. `enableCompanion = true` 时左上角显示💬气泡按钮（accentColor）
+3. 进入伴读时朗读自动暂停，退出时自动恢复
+4. 快捷问题按钮可点击，点击后发送并显示回复
+5. AI 回复简洁口语化，控制在 100 字以内
+6. 多轮对话正常，上下文连贯（最近 10 轮）
+7. 切换文档时对话历史自动重置
+8. 网络失败时显示错误提示，不崩溃
+9. 支持「清空对话」（右上角菜单 → 垃圾桶图标）
+10. 消息列表自动滚动到最新消息
+
+### 7.7 设置管理
 
 | 设置项 | 范围 | 默认值 | 持久化 |
 |--------|------|--------|--------|
@@ -327,12 +395,14 @@ KnowledgeApp.preferredColorScheme 响应 → 全局 ColorScheme 切换
 │                   Views 层                       │
 │  ContentView → TabView（书库/播放/设置）           │
 │  DocumentListView / PlayerView / SettingsView    │
+│  CompanionView（Sheet 弹出）                     │
 └──────────────────────┬──────────────────────────┘
                        │
 ┌──────────────────────▼──────────────────────────┐
 │                ViewModel 层                      │
 │  SpeakerViewModel（Facade）                       │
 │  ├── 播放控制 / 引擎切换 / 配置持久化               │
+│  ├── AI 伴读（askCompanion / resetCompanion）      │
 │  └── 状态同步（Timer 0.1s 轮询）                   │
 └──────────────────────┬──────────────────────────┘
                        │
@@ -340,13 +410,15 @@ KnowledgeApp.preferredColorScheme 响应 → 全局 ColorScheme 切换
 │                Services 层                       │
 │  TextExtractionService / SpeechService /         │
 │  LanguageDetector / AudioSessionService /        │
-│  NowPlayingService / ThemeManager                │
+│  NowPlayingService / ThemeManager /             │
+│  CompanionService / AISummaryService             │
 └──────────────────────┬──────────────────────────┘
                        │
 ┌──────────────────────▼──────────────────────────┐
 │                 Models 层                        │
 │  Document（SwiftData） / VoiceConfig /            │
-│  PlaybackState / ThemeMode / TTSEngine           │
+│  PlaybackState / ThemeMode / TTSEngine /         │
+│  CompanionMessage / SummaryResult                │
 └─────────────────────────────────────────────────┘
 ```
 
@@ -358,7 +430,7 @@ KnowledgeApp.preferredColorScheme 响应 → 全局 ColorScheme 切换
 | 数据持久化 | SwiftData（Document 模型） |
 | 配置存储 | UserDefaults（VoiceConfig / ThemeMode JSON 编解码） |
 | 音频 | AVFoundation（AVSpeechSynthesizer / AVAudioPlayer） |
-| 网络 | URLSession（HTTP 请求 + WebSocket） |
+| 网络 | URLSession（HTTP 请求，通义千问 / CosyVoice API） |
 | 文本提取 | PDFKit / Vision / CoreFoundation（ZIP Deflate） |
 | 系统集成 | App Group / Share Extension / MPNowPlayingInfoCenter |
 | 最低版本 | iOS 17.0 |
@@ -399,7 +471,16 @@ KnowledgeApp.preferredColorScheme 响应 → 全局 ColorScheme 切换
 | rawValue | String | "跟随系统" | 三种选项：跟随系统 / 白天模式 / 暗黑模式 |
 | colorScheme | ColorScheme? | nil | 映射到 SwiftUI ColorScheme（system→nil, light→.light, dark→.dark） |
 
-### 9.4 待扩展字段
+### 9.4 CompanionMessage（内存模型，不持久化）
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | UUID | 自动生成主键 |
+| content | String | 消息内容 |
+| isUser | Bool | true=用户消息，false=AI 回复 |
+| isLoading | Bool | 加载占位标记（默认 false） |
+
+### 9.5 待扩展字段
 
 | 模型 | 新增字段 | 用途 | 关联功能 |
 |------|---------|------|----------|
@@ -435,6 +516,7 @@ KnowledgeApp.preferredColorScheme 响应 → 全局 ColorScheme 切换
 | 引擎切换 | engine_switch | 切换 TTS 引擎 | from_engine, to_engine |
 | 引擎降级 | engine_fallback | CosyVoice 降级到系统 | error_reason |
 | 主题切换 | theme_switch | 切换主题模式 | from_theme, to_theme |
+| AI 伴读 | companion_ask | 用户向伴读提问 | doc_length, question_length, response_time |
 | AI 总结 | ai_summary | 触发 AI 总结 | doc_length, response_time |
 | 语音克隆 | voice_clone | 完成语音克隆 | audio_duration, clone_success |
 
@@ -690,18 +772,25 @@ V1.2 ✅ 已完成
 ├── 移除 Edge TTS（不可用），统一后续 TTS 方案为阿里云 CosyVoice
 └── 代码精简，移除冗余引擎切换逻辑
 
-V1.3 ✅ 已完成（当前版本）
+V1.3 ✅ 已完成
 ├── 主题模式（跟随系统 / 白天 / 暗黑）
 ├── 项目重命名为 Knowledge
 ├── 添加 Assets.xcassets（AccentColor + AppIcon）
 └── 全局颜色适配（.blue → .accentColor）
+
+V1.4 ✅ 已完成（当前版本）
+├── AI 伴读（预埋功能，默认隐藏）
+├── 边听边问的多轮对话（通义千问 qwen-plus）
+├── 携带朗读位置上下文（前后 500 字）
+└── 自动暂停/恢复朗读
 
 V2.0 🔲 规划中
 ├── AI 文档总结（通义千问）
 ├── CosyVoice TTS 引擎集成（高品质语音）
 ├── 语音克隆（CosyVoice）
 ├── 预设优质音色选择
-└── 引擎降级（CosyVoice → 系统 TTS）
+├── 引擎降级（CosyVoice → 系统 TTS）
+└── 开启 AI 伴读功能开关
 
 V3.0 🔲 规划中
 ├── AI 播客生成
@@ -738,11 +827,17 @@ Knowledge/
 │   ├── Document.swift                # 核心数据模型（SwiftData）
 │   ├── VoiceConfig.swift             # 语音配置
 │   ├── PlaybackState.swift           # 播放状态枚举
-│   └── ThemeMode.swift               # 主题模式枚举
+│   ├── ThemeMode.swift               # 主题模式枚举
+│   ├── SummaryResult.swift           # AI 摘要结果模型
+│   └── CompanionMessage.swift        # AI 伴读对话消息模型
 ├── Services/
 │   ├── TextExtractionService.swift   # 文本提取引擎（748行）
 │   ├── SpeechService.swift           # 系统 TTS 引擎
 │   ├── SpeechSynthesizerProtocol.swift # TTS 引擎抽象协议
+│   ├── CosyVoiceService.swift        # 阿里云 CosyVoice 网络层
+│   ├── CosyVoiceSynthesizer.swift    # CosyVoice TTS 合成器
+│   ├── AISummaryService.swift        # AI 总结网络层
+│   ├── CompanionService.swift        # AI 伴读网络层（多轮对话）
 │   ├── AudioSessionService.swift     # 音频会话管理
 │   ├── LanguageDetector.swift        # 语言自动检测
 │   ├── NowPlayingService.swift       # 锁屏控制中心
@@ -755,8 +850,12 @@ Knowledge/
 │   ├── ContentView.swift             # 根视图（TabView）
 │   ├── DocumentListView.swift        # 书库列表
 │   ├── DocumentRowView.swift         # 文档行
-│   ├── PlayerView.swift              # 播放器
+│   ├── PlayerView.swift              # 播放器（含伴读/总结入口）
 │   ├── PlayerControlsView.swift      # 播放控制
+│   ├── CompanionView.swift           # AI 伴读对话视图
+│   ├── SummaryCardView.swift         # AI 摘要卡片
+│   ├── VoiceCloneView.swift          # 语音克隆录制页
+│   ├── VoiceSelectView.swift         # 音色选择页
 │   └── SettingsView.swift            # 设置（含主题模式）
 ├── UIKit/
 │   └── DocumentPicker.swift           # 文件选择器桥接
@@ -780,6 +879,7 @@ Knowledge/
 | UserDefaults 存配置 | 配置项轻量，无需数据库 |
 | preferredColorScheme 驱动主题 | SwiftUI 原生方案，无需自定义颜色系统 |
 | .accentColor 替代硬编码 .blue | 确保主题切换后所有交互元素颜色一致 |
+| AI 伴读功能预埋 + 开关控制 | 代码已实现但默认隐藏，后续一键开启，避免发版时临时开发 |
 
 ### 15.3 术语表
 
@@ -788,7 +888,9 @@ Knowledge/
 | TTS | Text-to-Speech，文字转语音 |
 | CosyVoice | 阿里开源的多语言语音合成模型，后续主力 TTS 引擎 |
 | DashScope | 阿里云大模型 API 平台（通义千问 + CosyVoice） |
+| 通义千问 | 阿里云大语言模型，AI 伴读/摘要的底层引擎（qwen-plus） |
 | Facade | 外观模式，为子系统提供统一高层接口 |
 | SwiftData | Apple 现代持久化框架（iOS 17+） |
 | ThemeMode | 主题模式枚举（system / light / dark） |
 | AccentColor | SwiftUI 强调色，自动适配暗色模式 |
+| CompanionService | AI 伴读服务，基于通义千问的多轮对话，携带朗读上下文 |

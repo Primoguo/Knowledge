@@ -73,6 +73,12 @@ Knowledge/
 5. 在设置页切换主题模式（跟随系统 / 白天 / 暗黑）
 6. 切换其他 App 或锁屏，朗读继续后台播放
 
+## 待办事项
+
+- [ ] 替换 `ServerAPIClient.baseURL` 为实际服务器地址（需在阿里云服务器上部署中转 API 服务后填入）
+- [ ] 在 App Store Connect 中配置 IAP 产品：月订阅 + 年订阅
+- [ ] 替换 `SubscriptionManager.productIDs` 为实际的产品 ID
+
 ## 截图
 
 > 待补充

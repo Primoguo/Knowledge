@@ -3,9 +3,11 @@ import SwiftUI
 
 struct PlayerView: View {
     @ObservedObject var speakerVM: SpeakerViewModel
+    @ObservedObject var subscriptionManager = SubscriptionManager.shared
     @State private var scrollProxy: ScrollViewProxy?
     @State private var showSummary = false
     @State private var showCompanion = false
+    @State private var showPaywall = false
 
     var body: some View {
         NavigationStack {
@@ -46,16 +48,26 @@ struct PlayerView: View {
             .toolbar {
                 if let doc = speakerVM.currentDocument, !doc.extractedText.isEmpty {
                     ToolbarItem(placement: .topBarLeading) {
-                        // AI 伴读按钮（默认隐藏，在 SpeakerViewModel.enableCompanion = true 时显示）
-                        if speakerVM.enableCompanion {
-                            Button(action: { showCompanion = true }) {
-                                Image(systemName: "bubble.left.and.bubble.right")
-                                    .foregroundColor(.accentColor)
+                        // AI 伴读按钮（始终可见，未付费时弹付费墙）
+                        Button(action: {
+                            if subscriptionManager.isPremium {
+                                showCompanion = true
+                            } else {
+                                showPaywall = true
                             }
+                        }) {
+                            Image(systemName: "bubble.left.and.bubble.right")
+                                .foregroundColor(.accentColor)
                         }
                     }
                     ToolbarItem(placement: .topBarTrailing) {
-                        Button(action: { showSummary = true }) {
+                        Button(action: {
+                            if subscriptionManager.isPremium {
+                                showSummary = true
+                            } else {
+                                showPaywall = true
+                            }
+                        }) {
                             Image(systemName: "sparkles")
                                 .foregroundColor(.accentColor)
                         }
@@ -68,6 +80,9 @@ struct PlayerView: View {
             }
             .sheet(isPresented: $showCompanion) {
                 CompanionView(speakerVM: speakerVM)
+            }
+            .sheet(isPresented: $showPaywall) {
+                PaywallView()
             }
         }
     }

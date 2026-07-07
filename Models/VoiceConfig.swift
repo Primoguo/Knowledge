@@ -18,7 +18,7 @@ enum TTSEngine: String, Codable, CaseIterable {
     var description: String {
         switch self {
         case .system: return "iOS 17+ 神经网络增强版，音质自然，离线可用 "
-        case .knowledgeVoice: return "AI 云端合成，支持语音克隆，需配置 API Key"
+        case .knowledgeVoice: return "AI 云端合成，支持语音克隆，Premium 专属"
         case .legacySystem: return "兼容旧版本 iOS，音质较基础"
         }
     }

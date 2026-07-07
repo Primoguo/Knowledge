@@ -5,6 +5,8 @@ import AVFoundation
 struct SettingsView: View {
     @ObservedObject var speakerVM: SpeakerViewModel
     @EnvironmentObject var themeManager: ThemeManager
+    @ObservedObject var subscriptionManager = SubscriptionManager.shared
+    @State private var showPaywall = false
     @State private var rate: Double = 0.5
     @State private var pitch: Double = 1.0
     @State private var volume: Double = 1.0
@@ -36,6 +38,46 @@ struct SettingsView: View {
                                 }
                             }
                         }
+                    }
+                }
+
+                // MARK: - Premium 订阅
+                Section {
+                    if subscriptionManager.isPremium {
+                        HStack {
+                            Image(systemName: "crown.fill")
+                                .foregroundColor(.yellow)
+                            Text("Premium 已激活")
+                                .fontWeight(.medium)
+                            Spacer()
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundColor(.green)
+                        }
+                    } else {
+                        Button(action: { showPaywall = true }) {
+                            HStack {
+                                Image(systemName: "sparkles.rectangle.stack.fill")
+                                    .foregroundColor(.accentColor)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("解锁 Premium")
+                                        .fontWeight(.medium)
+                                        .foregroundColor(.primary)
+                                    Text("AI 总结、AI 伴读、高品质音色")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                    }
+                } header: {
+                    Text("Premium 功能")
+                } footer: {
+                    if !subscriptionManager.isPremium {
+                        Text("订阅后可使用全部 AI 功能")
                     }
                 }
 
@@ -179,6 +221,9 @@ struct SettingsView: View {
                 selectedLang = c.language; selectedVoice = c.voiceIdentifier
                 selectedEngine = c.engine
                 updateVoices()
+            }
+            .sheet(isPresented: $showPaywall) {
+                PaywallView()
             }
             .sheet(isPresented: $showVoiceSelect) {
                 VoiceSelectView(speakerVM: speakerVM)

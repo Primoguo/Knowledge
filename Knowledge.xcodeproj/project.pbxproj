@@ -9,7 +9,6 @@
 /* Begin PBXBuildFile section */
 		0194D25DE4933223F1FD5C63 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 178E2B8E17719705B9B76D0D /* AppDelegate.swift */; };
 		0A1B2C3D4E5F6A7B8C9D0E1F /* ShareExtensionHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A2B3C4D5E6F7A8B9C0D1E2F /* ShareExtensionHandler.swift */; };
-		1DA73C1450D667169FA7796B /* APIKeyConfigView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCD56356D29E04036FEB3B18 /* APIKeyConfigView.swift */; };
 		1ED9AE877F6B92AE3A311987 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FE0F01778A82A0CDF274BF0 /* SettingsView.swift */; };
 		202ECEBA48841EAB8D168BB9 /* Document.swift in Sources */ = {isa = PBXBuildFile; fileRef = D72A05CEA76127CDE65DB96E /* Document.swift */; };
 		2307C848FE02329AF1A37739 /* CosyVoiceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD2FF9A9B2611C44593160A1 /* CosyVoiceService.swift */; };
@@ -36,9 +35,12 @@
 		E3BF88FE6254C99735AA5ABC /* DocumentListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49A3001B76A7D375719E9CF4 /* DocumentListView.swift */; };
 		E448FACB9627E10892C3E3B0 /* TextExtractionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF9D95D8AAA6880C262B67BF /* TextExtractionService.swift */; };
 		E69554A142DFDE312E8A54E8 /* NowPlayingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F996F2721C427DC1CFE8803 /* NowPlayingService.swift */; };
-		EB15D8752FFD06DD0098B690 /* CompanionService 2.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB15D8742FFD06DD0098B690 /* CompanionService 2.swift */; };
 		EB15D8772FFD06EF0098B690 /* CompanionMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB15D8762FFD06EF0098B690 /* CompanionMessage.swift */; };
 		EB15D8792FFD07130098B690 /* CompanionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB15D8782FFD07130098B690 /* CompanionView.swift */; };
+		EB5650EE2FFD70D5007F11D8 /* ServerAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB5650ED2FFD70D5007F11D8 /* ServerAPIClient.swift */; };
+		EB5650F02FFD70EF007F11D8 /* SubscriptionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB5650EF2FFD70EF007F11D8 /* SubscriptionManager.swift */; };
+		EB5650F42FFD71FB007F11D8 /* PaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB5650F32FFD71FB007F11D8 /* PaywallView.swift */; };
+		EB5650F62FFD721A007F11D8 /* CompanionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB5650F52FFD721A007F11D8 /* CompanionService.swift */; };
 		EBF368592FFD0CCE001AEF1A /* SystemVoiceSelectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBF368582FFD0CCE001AEF1A /* SystemVoiceSelectView.swift */; };
 		EBF3685B2FFD0E0D001AEF1A /* SystemVoiceManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBF3685A2FFD0E0D001AEF1A /* SystemVoiceManager.swift */; };
 		F188BAFE84A60CAD8CCDBA5B /* KnowledgeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DD135397EAB7233199FA6BB /* KnowledgeApp.swift */; };
@@ -80,13 +82,15 @@
 		B706E258FC3352EB1EB7194E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		BD165D274BDD6BC995863DCB /* ClonedVoice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClonedVoice.swift; sourceTree = "<group>"; };
 		C3D4E5F6A7B8C9D0E1F2A3B4 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		CCD56356D29E04036FEB3B18 /* APIKeyConfigView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIKeyConfigView.swift; sourceTree = "<group>"; };
 		CD2FF9A9B2611C44593160A1 /* CosyVoiceService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CosyVoiceService.swift; sourceTree = "<group>"; };
 		D72A05CEA76127CDE65DB96E /* Document.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Document.swift; sourceTree = "<group>"; };
 		DF9D95D8AAA6880C262B67BF /* TextExtractionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextExtractionService.swift; sourceTree = "<group>"; };
-		EB15D8742FFD06DD0098B690 /* CompanionService 2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CompanionService 2.swift"; sourceTree = "<group>"; };
 		EB15D8762FFD06EF0098B690 /* CompanionMessage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanionMessage.swift; sourceTree = "<group>"; };
 		EB15D8782FFD07130098B690 /* CompanionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanionView.swift; sourceTree = "<group>"; };
+		EB5650ED2FFD70D5007F11D8 /* ServerAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerAPIClient.swift; sourceTree = "<group>"; };
+		EB5650EF2FFD70EF007F11D8 /* SubscriptionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionManager.swift; sourceTree = "<group>"; };
+		EB5650F32FFD71FB007F11D8 /* PaywallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallView.swift; sourceTree = "<group>"; };
+		EB5650F52FFD721A007F11D8 /* CompanionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanionService.swift; sourceTree = "<group>"; };
 		EBF368582FFD0CCE001AEF1A /* SystemVoiceSelectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemVoiceSelectView.swift; sourceTree = "<group>"; };
 		EBF3685A2FFD0E0D001AEF1A /* SystemVoiceManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemVoiceManager.swift; sourceTree = "<group>"; };
 		F0DA3FA5CB454C77B3E28FA6 /* ThemeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeManager.swift; sourceTree = "<group>"; };
@@ -123,10 +127,12 @@
 		4FB096A4286A77BD94438835 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				EB5650F52FFD721A007F11D8 /* CompanionService.swift */,
+				EB5650EF2FFD70EF007F11D8 /* SubscriptionManager.swift */,
+				EB5650ED2FFD70D5007F11D8 /* ServerAPIClient.swift */,
 				EBF3685A2FFD0E0D001AEF1A /* SystemVoiceManager.swift */,
 				EB15D8782FFD07130098B690 /* CompanionView.swift */,
 				EB15D8762FFD06EF0098B690 /* CompanionMessage.swift */,
-				EB15D8742FFD06DD0098B690 /* CompanionService 2.swift */,
 				2B96D7B260A7F7AE01CBF76A /* AudioSessionService.swift */,
 				B5FDB6D803CD345BCC10A093 /* ErrorHandler.swift */,
 				2E767185A460A5B10E3903F8 /* LanguageDetector.swift */,
@@ -220,13 +226,13 @@
 		FBFEB98686E6F3BFAB5373E4 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				EB5650F32FFD71FB007F11D8 /* PaywallView.swift */,
 				41D103445FE21E8FBB0D7ACE /* ContentView.swift */,
 				49A3001B76A7D375719E9CF4 /* DocumentListView.swift */,
 				40292C37BB6F714942F65E06 /* DocumentRowView.swift */,
 				41E7259B8612CC32A8F21C00 /* PlayerControlsView.swift */,
 				353FF0E7B7908D487C2B608E /* PlayerView.swift */,
 				5FE0F01778A82A0CDF274BF0 /* SettingsView.swift */,
-				CCD56356D29E04036FEB3B18 /* APIKeyConfigView.swift */,
 				26C68A4A417DC388729302A2 /* SummaryCardView.swift */,
 				6F0F5553C0145BB8213C1372 /* VoiceCloneView.swift */,
 				A1FF96F1D51F3ADFDC9934A4 /* VoiceSelectView.swift */,
@@ -338,8 +344,8 @@
 				202ECEBA48841EAB8D168BB9 /* Document.swift in Sources */,
 				BFFF14D99BE365358D80FA0A /* PlaybackState.swift in Sources */,
 				95F9774DA2884E0E2618AEBD /* VoiceConfig.swift in Sources */,
-				EB15D8752FFD06DD0098B690 /* CompanionService 2.swift in Sources */,
 				EBF3685B2FFD0E0D001AEF1A /* SystemVoiceManager.swift in Sources */,
+				EB5650F62FFD721A007F11D8 /* CompanionService.swift in Sources */,
 				4E93C25917D659F4C7B4E091 /* AudioSessionService.swift in Sources */,
 				486F6C074A4A4FD29807A0AB /* ErrorHandler.swift in Sources */,
 				9CD5C7E64BF5AF50AE79E892 /* LanguageDetector.swift in Sources */,
@@ -354,6 +360,7 @@
 				E3BF88FE6254C99735AA5ABC /* DocumentListView.swift in Sources */,
 				B65186DFA68CAA0110AF98C2 /* DocumentRowView.swift in Sources */,
 				A55B319EC4410490DB345C29 /* PlayerControlsView.swift in Sources */,
+				EB5650F02FFD70EF007F11D8 /* SubscriptionManager.swift in Sources */,
 				349299CC2B017ABC5EFBD828 /* PlayerView.swift in Sources */,
 				1ED9AE877F6B92AE3A311987 /* SettingsView.swift in Sources */,
 				0A1B2C3D4E5F6A7B8C9D0E1F /* ShareExtensionHandler.swift in Sources */,
@@ -362,14 +369,15 @@
 				70514E4AEF136CEC171294B2 /* ClonedVoice.swift in Sources */,
 				E119FF079BDE6F116F9DE819 /* SummaryResult.swift in Sources */,
 				EB15D8792FFD07130098B690 /* CompanionView.swift in Sources */,
+				EB5650F42FFD71FB007F11D8 /* PaywallView.swift in Sources */,
 				CB35E63DC4A50F5311668C62 /* AISummaryService.swift in Sources */,
 				2307C848FE02329AF1A37739 /* CosyVoiceService.swift in Sources */,
 				B03CB3DF4ECE98746FDBE028 /* CosyVoiceSynthesizer.swift in Sources */,
 				EBF368592FFD0CCE001AEF1A /* SystemVoiceSelectView.swift in Sources */,
-				1DA73C1450D667169FA7796B /* APIKeyConfigView.swift in Sources */,
 				F7B29584FE152B7FF6994A55 /* SummaryCardView.swift in Sources */,
 				F56DF3AE955D0B7687C889DB /* VoiceCloneView.swift in Sources */,
 				61FB6C58D0D46A5E28B16618 /* VoiceSelectView.swift in Sources */,
+				EB5650EE2FFD70D5007F11D8 /* ServerAPIClient.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
