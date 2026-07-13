@@ -44,23 +44,41 @@ struct SettingsView: View {
                 // MARK: - Premium 订阅
                 Section {
                     if subscriptionManager.isPremium {
-                        HStack {
+                        HStack(spacing: 12) {
                             Image(systemName: "crown.fill")
+                                .font(.title3)
                                 .foregroundColor(.yellow)
-                            Text("Premium 已激活")
-                                .fontWeight(.medium)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Premium 已激活")
+                                    .fontWeight(.semibold)
+                                Text("全部 AI 功能已解锁")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
                             Spacer()
-                            Image(systemName: "checkmark.circle.fill")
+                            Image(systemName: "checkmark.seal.fill")
+                                .font(.title3)
                                 .foregroundColor(.green)
                         }
+                        .padding(.vertical, 4)
                     } else {
                         Button(action: { showPaywall = true }) {
-                            HStack {
-                                Image(systemName: "sparkles.rectangle.stack.fill")
-                                    .foregroundColor(.accentColor)
+                            HStack(spacing: 12) {
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .fill(LinearGradient(
+                                            colors: [.accentColor.opacity(0.8), .accentColor.opacity(0.5)],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        ))
+                                        .frame(width: 40, height: 40)
+                                    Image(systemName: "sparkles")
+                                        .font(.system(size: 18))
+                                        .foregroundColor(.white)
+                                }
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text("解锁 Premium")
-                                        .fontWeight(.medium)
+                                        .fontWeight(.semibold)
                                         .foregroundColor(.primary)
                                     Text("AI 总结、AI 伴读、高品质音色")
                                         .font(.caption)
@@ -69,9 +87,11 @@ struct SettingsView: View {
                                 Spacer()
                                 Image(systemName: "chevron.right")
                                     .font(.caption)
+                                    .fontWeight(.semibold)
                                     .foregroundColor(.secondary)
                             }
                         }
+                        .padding(.vertical, 4)
                     }
                 } header: {
                     Text("Premium 功能")

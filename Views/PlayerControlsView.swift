@@ -71,9 +71,13 @@ private struct ControlButton: View {
                 .foregroundColor(size == .large ? .white : .primary)
                 .frame(width: size == .large ? 64 : 40, height: size == .large ? 64 : 40)
                 .background(
-                    size == .large
-                        ? AnyShapeStyle(Circle().fill(Color.accentColor).shadow(color: .accentColor.opacity(0.3), radius: 8, y: 3))
-                        : AnyShapeStyle(Color.clear)
+                    Group {
+                        if size == .large {
+                            Circle()
+                                .fill(Color.accentColor)
+                                .shadow(color: .accentColor.opacity(0.3), radius: 8, y: 3)
+                        }
+                    }
                 )
         }
     }

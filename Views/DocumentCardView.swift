@@ -111,6 +111,15 @@ struct DocumentCardView: View {
     }
 }
 
+/// 按压缩放按钮样式 — 点击时轻微缩小，提供触觉反馈感
+struct PressableStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.96 : 1.0)
+            .animation(.spring(response: 0.3, dampingFraction: 0.6), value: configuration.isPressed)
+    }
+}
+
 #Preview {
     HStack(spacing: 12) {
         DocumentCardView(

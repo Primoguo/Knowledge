@@ -47,20 +47,21 @@ struct DocumentListView: View {
                                 ForEach(documents) { doc in
                                     let playing = speakerVM.currentDocument?.id == doc.id && speakerVM.state == .playing
 
-                                    DocumentCardView(document: doc, isPlaying: playing)
-                                        .contentShape(Rectangle())
-                                        .onTapGesture {
-                                            HapticService.shared.playPause()
-                                            speakerVM.loadDocument(doc)
-                                            speakerVM.play()
+                                    Button {
+                                        HapticService.shared.playPause()
+                                        speakerVM.loadDocument(doc)
+                                        speakerVM.play()
+                                    } label: {
+                                        DocumentCardView(document: doc, isPlaying: playing)
+                                    }
+                                    .buttonStyle(PressableStyle())
+                                    .contextMenu {
+                                        Button(role: .destructive) {
+                                            deleteDoc(doc)
+                                        } label: {
+                                            Label("删除", systemImage: "trash")
                                         }
-                                        .contextMenu {
-                                            Button(role: .destructive) {
-                                                deleteDoc(doc)
-                                            } label: {
-                                                Label("删除", systemImage: "trash")
-                                            }
-                                        }
+                                    }
                                 }
                             }
                             .padding(.horizontal, 16)
@@ -123,12 +124,14 @@ struct DocumentListView: View {
                     ForEach(recentDocs) { doc in
                         let playing = speakerVM.currentDocument?.id == doc.id && speakerVM.state == .playing
 
-                        continueListeningCard(doc: doc, isPlaying: playing)
-                            .onTapGesture {
-                                HapticService.shared.playPause()
-                                speakerVM.loadDocument(doc)
-                                speakerVM.play()
-                            }
+                        Button {
+                            HapticService.shared.playPause()
+                            speakerVM.loadDocument(doc)
+                            speakerVM.play()
+                        } label: {
+                            continueListeningCard(doc: doc, isPlaying: playing)
+                        }
+                        .buttonStyle(PressableStyle())
                     }
                 }
                 .padding(.horizontal, 16)
@@ -210,22 +213,57 @@ struct DocumentListView: View {
     }
 
     private var emptyView: some View {
-        VStack(spacing: 20) {
-            Image(systemName: "doc.text.magnifyingglass").font(.system(size: 60)).foregroundColor(.secondary)
-            Text("还没有文档").font(.title2).foregroundColor(.secondary)
-            Text("点击右上角 + 导入文档").font(.subheadline).foregroundColor(.secondary)
-            HStack(spacing: 16) {
-                Button { showPicker = true } label: {
+        VStack(spacing: 24) {
+            Spacer()
+            
+            // 品牌化图标
+            ZStack {
+                Circle()
+                    .fill(Color.accentColor.opacity(0.1))
+                    .frame(width: 100, height: 100)
+                Image(systemName: "book.fill")
+                    .font(.system(size: 40))
+                    .foregroundColor(.accentColor)
+            }
+            
+            VStack(spacing: 8) {
+                Text("书库还是空的")
+                    .font(.title3)
+                    .fontWeight(.semibold)
+                Text("导入文档，开始你的听书之旅")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+            }
+            
+            HStack(spacing: 14) {
+                Button {
+                    showPicker = true
+                } label: {
                     Label("导入文档", systemImage: "square.and.arrow.down.fill")
-                        .font(.headline).padding(.horizontal, 24).padding(.vertical, 12)
-                        .background(Color.accentColor).foregroundColor(.white).clipShape(Capsule())
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 12)
+                        .background(Color.accentColor)
+                        .foregroundColor(.white)
+                        .clipShape(Capsule())
                 }
-                Button { showURLInput = true } label: {
+                
+                Button {
+                    showURLInput = true
+                } label: {
                     Label("添加网页", systemImage: "link")
-                        .font(.headline).padding(.horizontal, 24).padding(.vertical, 12)
-                        .background(Color.teal).foregroundColor(.white).clipShape(Capsule())
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 12)
+                        .background(Color.primary.opacity(0.08))
+                        .foregroundColor(.primary)
+                        .clipShape(Capsule())
                 }
             }
+            
+            Spacer()
         }
     }
 

@@ -108,7 +108,7 @@ struct SummaryLoadingView: View {
                     .trim(from: 0, to: animationProgress)
                     .stroke(
                         LinearGradient(
-                            colors: [.accentColor, .purple],
+                            colors: [.accentColor, .accentColor.opacity(0.5)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ),

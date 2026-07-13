@@ -95,7 +95,7 @@ struct PlayerView: View {
         HStack(spacing: 12) {
             ZStack {
                 RoundedRectangle(cornerRadius: 10)
-                    .fill(LinearGradient(colors: [.accentColor.opacity(0.7), .purple.opacity(0.5)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                    .fill(LinearGradient(colors: [.accentColor.opacity(0.8), .accentColor.opacity(0.4)], startPoint: .topLeading, endPoint: .bottomTrailing))
                     .frame(width: 48, height: 48)
                 Image(systemName: doc.fileType.iconName).font(.title3).foregroundColor(.white)
             }
@@ -133,6 +133,7 @@ struct PlayerView: View {
                 .background(Color.accentColor.opacity(0.1))
                 .cornerRadius(10)
             }
+            .buttonStyle(PressableStyle())
             .disabled(speakerVM.isGeneratingSummary)
 
             // AI 伴读
@@ -155,6 +156,7 @@ struct PlayerView: View {
                 .background(Color.accentColor.opacity(0.1))
                 .cornerRadius(10)
             }
+            .buttonStyle(PressableStyle())
         }
     }
 
@@ -286,11 +288,24 @@ struct PlayerView: View {
     // MARK: - Empty State
 
     private var emptyState: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 20) {
             Spacer()
-            Image(systemName: "headphones").font(.system(size: 60)).foregroundColor(.secondary)
-            Text("暂无播放内容").font(.title2).foregroundColor(.secondary)
-            Text("在书库中选择一篇文档开始朗读").font(.subheadline).foregroundColor(.secondary)
+            ZStack {
+                Circle()
+                    .fill(Color.accentColor.opacity(0.1))
+                    .frame(width: 100, height: 100)
+                Image(systemName: "headphones")
+                    .font(.system(size: 40))
+                    .foregroundColor(.accentColor)
+            }
+            VStack(spacing: 8) {
+                Text("暂无播放内容")
+                    .font(.title3)
+                    .fontWeight(.semibold)
+                Text("在书库中选择一篇文档开始朗读")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+            }
             Spacer()
         }
     }
