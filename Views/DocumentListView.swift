@@ -140,61 +140,69 @@ struct DocumentListView: View {
     }
 
     private func continueListeningCard(doc: Document, isPlaying: Bool) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            // 图标 + 播放状态
-            HStack {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(iconColor(doc.fileType.iconColor).opacity(0.12))
-                        .frame(width: 40, height: 40)
-                    Image(systemName: doc.fileType.iconName)
-                        .font(.system(size: 18))
-                        .foregroundColor(iconColor(doc.fileType.iconColor))
-                }
-                Spacer()
-                if isPlaying {
-                    Image(systemName: "waveform")
-                        .font(.caption)
-                        .foregroundColor(.accentColor)
-                        .symbolEffect(.variableColor.iterative)
+        HStack(spacing: 10) {
+            // 小图标
+            ZStack {
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(iconColor(doc.fileType.iconColor).opacity(0.12))
+                    .frame(width: 32, height: 32)
+                Image(systemName: doc.fileType.iconName)
+                    .font(.system(size: 14))
+                    .foregroundColor(iconColor(doc.fileType.iconColor))
+            }
+
+            // 标题 + 进度
+            VStack(alignment: .leading, spacing: 3) {
+                Text(doc.title)
+                    .font(.system(size: 13, weight: .semibold))
+                    .lineLimit(1)
+                    .foregroundColor(isPlaying ? .accentColor : .primary)
+
+                // 迷你进度条
+                HStack(spacing: 6) {
+                    GeometryReader { geo in
+                        ZStack(alignment: .leading) {
+                            Capsule()
+                                .fill(Color.secondary.opacity(0.15))
+                                .frame(height: 2)
+                            Capsule()
+                                .fill(Color.accentColor)
+                                .frame(width: geo.size.width * doc.progress, height: 2)
+                        }
+                    }
+                    .frame(width: 50, height: 2)
+
+                    Text("\(Int(doc.progress * 100))%")
+                        .font(.system(size: 10))
+                        .foregroundColor(.secondary)
                 }
             }
 
-            // 标题
-            Text(doc.title)
-                .font(.system(size: 14, weight: .semibold))
-                .lineLimit(2)
-                .foregroundColor(isPlaying ? .accentColor : .primary)
-                .frame(height: 36, alignment: .top)
+            Spacer(minLength: 0)
 
-            // 进度条
-            GeometryReader { geo in
-                ZStack(alignment: .leading) {
-                    Capsule()
-                        .fill(Color.secondary.opacity(0.15))
-                        .frame(height: 3)
-                    Capsule()
-                        .fill(Color.accentColor)
-                        .frame(width: geo.size.width * doc.progress, height: 3)
-                }
+            // 播放状态 / 箭头
+            if isPlaying {
+                Image(systemName: "waveform")
+                    .font(.caption2)
+                    .foregroundColor(.accentColor)
+                    .symbolEffect(.variableColor.iterative)
+            } else {
+                Image(systemName: "play.circle.fill")
+                    .font(.system(size: 20))
+                    .foregroundColor(.accentColor.opacity(0.6))
             }
-            .frame(height: 3)
-
-            // 进度百分比
-            Text("\(Int(doc.progress * 100))% · \(formatLen(doc.totalLength))")
-                .font(.caption2)
-                .foregroundColor(.secondary)
         }
-        .padding(12)
-        .frame(width: 150)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .frame(width: 200)
         .background(
-            RoundedRectangle(cornerRadius: 14)
+            RoundedRectangle(cornerRadius: 12)
                 .fill(Color(.secondarySystemGroupedBackground))
-                .shadow(color: .black.opacity(0.04), radius: 6, y: 2)
+                .shadow(color: .black.opacity(0.03), radius: 4, y: 1)
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 14)
-                .stroke(isPlaying ? Color.accentColor : Color.clear, lineWidth: 1.5)
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(isPlaying ? Color.accentColor.opacity(0.5) : Color.clear, lineWidth: 1)
         )
     }
 
