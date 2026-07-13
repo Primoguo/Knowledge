@@ -178,7 +178,7 @@ struct PlayerView: View {
                 .padding(.vertical, 8)
                 .padding(.horizontal, 4)
             }
-            .background(Color(.systemGroupedBackground))
+            .background(Color.clear)
             .cornerRadius(12)
             .onAppear { scrollProxy = proxy }
             .onChange(of: activeParagraphIndex(paragraphs: paragraphs)) { newIndex in
@@ -272,9 +272,9 @@ struct PlayerView: View {
                     let lower = AttributedString.Index(stringRange.lowerBound, within: attributed)
                     let upper = AttributedString.Index(stringRange.upperBound, within: attributed)
                     if let lower, let upper {
-                        attributed[lower..<upper].foregroundColor = .accentColor
-                        attributed[lower..<upper].font = .system(size: 17, weight: .bold, design: .serif)
-                        attributed[lower..<upper].backgroundColor = Color.accentColor.opacity(0.15)
+                        attributed[lower..<upper].foregroundColor = .primary
+                        attributed[lower..<upper].font = .system(size: 17, weight: .semibold, design: .serif)
+                        attributed[lower..<upper].backgroundColor = Color.accentColor.opacity(0.08)
                     }
                 }
             }

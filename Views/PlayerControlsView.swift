@@ -34,18 +34,18 @@ struct PlayerControlsView: View {
                         speakerVM.updateConfig(config)
                     }
                     .font(.caption2).fontWeight(.semibold)
-                    .padding(.horizontal, 8).padding(.vertical, 4)
+                    .padding(.horizontal, 10).padding(.vertical, 6)
                     .background(
                         abs(speakerVM.voiceConfig.rate - preset.value) < 0.01
-                            ? Color.accentColor.opacity(0.2)
-                            : Color.primary.opacity(0.06)
+                            ? Color.accentColor
+                            : Color.primary.opacity(0.05)
                     )
                     .foregroundColor(
                         abs(speakerVM.voiceConfig.rate - preset.value) < 0.01
-                            ? .accentColor
+                            ? .white
                             : .secondary
                     )
-                    .cornerRadius(6)
+                    .cornerRadius(8)
                 }
             }
         }
@@ -56,7 +56,7 @@ struct PlayerControlsView: View {
     }
 
     private let quickSpeeds: [(label: String, value: Float)] = [
-        ("0.7x", 0.35), ("1x", 0.5), ("1.2x", 0.7), ("1.5x", 1.0), ("2x", 1.5),
+        ("1x", 0.5), ("1.2x", 0.7), ("1.5x", 1.0), ("2x", 1.5),
     ]
 }
 
@@ -68,9 +68,13 @@ private struct ControlButton: View {
         Button(action: action) {
             Image(systemName: icon)
                 .font(.system(size: size == .large ? 28 : 22))
-                .foregroundColor(.primary)
+                .foregroundColor(size == .large ? .white : .primary)
                 .frame(width: size == .large ? 64 : 40, height: size == .large ? 64 : 40)
-                .background(size == .large ? Circle().fill(Color.accentColor.opacity(0.12)) : Circle().fill(Color.clear))
+                .background(
+                    size == .large
+                        ? AnyShapeStyle(Circle().fill(Color.accentColor).shadow(color: .accentColor.opacity(0.3), radius: 8, y: 3))
+                        : AnyShapeStyle(Color.clear)
+                )
         }
     }
 }
