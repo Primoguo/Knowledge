@@ -41,6 +41,9 @@
 		EB5650F02FFD70EF007F11D8 /* SubscriptionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB5650EF2FFD70EF007F11D8 /* SubscriptionManager.swift */; };
 		EB5650F42FFD71FB007F11D8 /* PaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB5650F32FFD71FB007F11D8 /* PaywallView.swift */; };
 		EB5650F62FFD721A007F11D8 /* CompanionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB5650F52FFD721A007F11D8 /* CompanionService.swift */; };
+		EBCC9BB3300164E700EA13FF /* HapticService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBCC9BB2300164E700EA13FF /* HapticService.swift */; };
+		EBCC9BB5300164FC00EA13FF /* ProgressBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBCC9BB4300164FC00EA13FF /* ProgressBarView.swift */; };
+		EBCC9BB73001689C00EA13FF /* DocumentCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBCC9BB63001689C00EA13FF /* DocumentCardView.swift */; };
 		EBF368592FFD0CCE001AEF1A /* SystemVoiceSelectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBF368582FFD0CCE001AEF1A /* SystemVoiceSelectView.swift */; };
 		EBF3685B2FFD0E0D001AEF1A /* SystemVoiceManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBF3685A2FFD0E0D001AEF1A /* SystemVoiceManager.swift */; };
 		F188BAFE84A60CAD8CCDBA5B /* KnowledgeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DD135397EAB7233199FA6BB /* KnowledgeApp.swift */; };
@@ -91,6 +94,9 @@
 		EB5650EF2FFD70EF007F11D8 /* SubscriptionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionManager.swift; sourceTree = "<group>"; };
 		EB5650F32FFD71FB007F11D8 /* PaywallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallView.swift; sourceTree = "<group>"; };
 		EB5650F52FFD721A007F11D8 /* CompanionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanionService.swift; sourceTree = "<group>"; };
+		EBCC9BB2300164E700EA13FF /* HapticService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticService.swift; sourceTree = "<group>"; };
+		EBCC9BB4300164FC00EA13FF /* ProgressBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressBarView.swift; sourceTree = "<group>"; };
+		EBCC9BB63001689C00EA13FF /* DocumentCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentCardView.swift; sourceTree = "<group>"; };
 		EBF368582FFD0CCE001AEF1A /* SystemVoiceSelectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemVoiceSelectView.swift; sourceTree = "<group>"; };
 		EBF3685A2FFD0E0D001AEF1A /* SystemVoiceManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemVoiceManager.swift; sourceTree = "<group>"; };
 		F0DA3FA5CB454C77B3E28FA6 /* ThemeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeManager.swift; sourceTree = "<group>"; };
@@ -127,6 +133,7 @@
 		4FB096A4286A77BD94438835 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				EBCC9BB2300164E700EA13FF /* HapticService.swift */,
 				EB5650F52FFD721A007F11D8 /* CompanionService.swift */,
 				EB5650EF2FFD70EF007F11D8 /* SubscriptionManager.swift */,
 				EB5650ED2FFD70D5007F11D8 /* ServerAPIClient.swift */,
@@ -226,6 +233,8 @@
 		FBFEB98686E6F3BFAB5373E4 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				EBCC9BB63001689C00EA13FF /* DocumentCardView.swift */,
+				EBCC9BB4300164FC00EA13FF /* ProgressBarView.swift */,
 				EB5650F32FFD71FB007F11D8 /* PaywallView.swift */,
 				41D103445FE21E8FBB0D7ACE /* ContentView.swift */,
 				49A3001B76A7D375719E9CF4 /* DocumentListView.swift */,
@@ -360,6 +369,7 @@
 				E3BF88FE6254C99735AA5ABC /* DocumentListView.swift in Sources */,
 				B65186DFA68CAA0110AF98C2 /* DocumentRowView.swift in Sources */,
 				A55B319EC4410490DB345C29 /* PlayerControlsView.swift in Sources */,
+				EBCC9BB5300164FC00EA13FF /* ProgressBarView.swift in Sources */,
 				EB5650F02FFD70EF007F11D8 /* SubscriptionManager.swift in Sources */,
 				349299CC2B017ABC5EFBD828 /* PlayerView.swift in Sources */,
 				1ED9AE877F6B92AE3A311987 /* SettingsView.swift in Sources */,
@@ -371,9 +381,11 @@
 				EB15D8792FFD07130098B690 /* CompanionView.swift in Sources */,
 				EB5650F42FFD71FB007F11D8 /* PaywallView.swift in Sources */,
 				CB35E63DC4A50F5311668C62 /* AISummaryService.swift in Sources */,
+				EBCC9BB3300164E700EA13FF /* HapticService.swift in Sources */,
 				2307C848FE02329AF1A37739 /* CosyVoiceService.swift in Sources */,
 				B03CB3DF4ECE98746FDBE028 /* CosyVoiceSynthesizer.swift in Sources */,
 				EBF368592FFD0CCE001AEF1A /* SystemVoiceSelectView.swift in Sources */,
+				EBCC9BB73001689C00EA13FF /* DocumentCardView.swift in Sources */,
 				F7B29584FE152B7FF6994A55 /* SummaryCardView.swift in Sources */,
 				F56DF3AE955D0B7687C889DB /* VoiceCloneView.swift in Sources */,
 				61FB6C58D0D46A5E28B16618 /* VoiceSelectView.swift in Sources */,
@@ -388,6 +400,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
@@ -416,6 +429,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
