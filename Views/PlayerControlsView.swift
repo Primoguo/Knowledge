@@ -7,9 +7,9 @@ struct PlayerControlsView: View {
     private let haptic = HapticService.shared
 
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 20) {
             // 主控制按钮
-            HStack(spacing: 32) {
+            HStack(spacing: 40) {
                 ControlButton(icon: "gobackward.15", size: .small) {
                     haptic.skip()
                     speakerVM.skipBackward()
@@ -25,27 +25,22 @@ struct PlayerControlsView: View {
             }
 
             // 语速快捷切换
-            HStack(spacing: 12) {
+            HStack(spacing: 8) {
                 ForEach(quickSpeeds, id: \.label) { preset in
+                    let isActive = abs(speakerVM.voiceConfig.rate - preset.value) < 0.01
                     Button(preset.label) {
                         haptic.speedChange()
                         var config = speakerVM.voiceConfig
                         config.rate = preset.value
                         speakerVM.updateConfig(config)
                     }
-                    .font(.caption2).fontWeight(.semibold)
-                    .padding(.horizontal, 10).padding(.vertical, 6)
+                    .font(.system(size: 12, weight: .medium))
+                    .padding(.horizontal, 12).padding(.vertical, 6)
+                    .foregroundColor(isActive ? .primary : .secondary)
                     .background(
-                        abs(speakerVM.voiceConfig.rate - preset.value) < 0.01
-                            ? Color.accentColor
-                            : Color.primary.opacity(0.05)
+                        RoundedRectangle(cornerRadius: 6)
+                            .fill(isActive ? Color.secondary.opacity(0.12) : Color.clear)
                     )
-                    .foregroundColor(
-                        abs(speakerVM.voiceConfig.rate - preset.value) < 0.01
-                            ? .white
-                            : .secondary
-                    )
-                    .cornerRadius(8)
                 }
             }
         }
@@ -67,15 +62,14 @@ private struct ControlButton: View {
     var body: some View {
         Button(action: action) {
             Image(systemName: icon)
-                .font(.system(size: size == .large ? 28 : 22))
-                .foregroundColor(size == .large ? .white : .primary)
-                .frame(width: size == .large ? 64 : 40, height: size == .large ? 64 : 40)
+                .font(.system(size: size == .large ? 26 : 20, weight: .light))
+                .foregroundColor(.primary)
+                .frame(width: size == .large ? 60 : 40, height: size == .large ? 60 : 40)
                 .background(
                     Group {
                         if size == .large {
                             Circle()
-                                .fill(Color.accentColor)
-                                .shadow(color: .accentColor.opacity(0.3), radius: 8, y: 3)
+                                .fill(Color.primary.opacity(0.06))
                         }
                     }
                 )

@@ -76,6 +76,7 @@ struct PlayerView: View {
                     emptyState
                 }
             }
+            .background(Color(.systemBackground))
             .navigationTitle("正在播放")
             .toolbar { }
             .sheet(isPresented: $showSummary) {
@@ -116,21 +117,28 @@ struct PlayerView: View {
     // MARK: - Header
 
     private func headerView(doc: Document) -> some View {
-        HStack(spacing: 12) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 10)
-                    .fill(LinearGradient(colors: [.accentColor.opacity(0.8), .accentColor.opacity(0.4)], startPoint: .topLeading, endPoint: .bottomTrailing))
-                    .frame(width: 48, height: 48)
-                Image(systemName: doc.fileType.iconName).font(.title3).foregroundColor(.white)
-            }
-            VStack(alignment: .leading, spacing: 2) {
-                Text(doc.title).font(.headline).lineLimit(1)
+        HStack(spacing: 14) {
+            // 文件类型图标（极简风格）
+            Image(systemName: doc.fileType.iconName)
+                .font(.system(size: 20, weight: .light))
+                .foregroundColor(.secondary)
+                .frame(width: 40, height: 40)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color.secondary.opacity(0.06))
+                )
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(doc.title)
+                    .font(.system(size: 16, weight: .medium))
+                    .lineLimit(1)
                 Text("\(doc.fileType.displayName) · \(formatLen(doc.totalLength))")
-                    .font(.caption).foregroundColor(.secondary)
+                    .font(.system(size: 12))
+                    .foregroundColor(.secondary)
             }
             Spacer()
 
-            // 荔枝伴侣（根据播放状态变化 + 等级装饰）
+            // 荔枝伴侣
             LycheeMascotView(
                 size: 36,
                 state: mascotStateForPlayback,
@@ -154,10 +162,10 @@ struct PlayerView: View {
 
     /// AI 功能按钮栏（进度条下方，始终可见）
     private var aiFeatureBar: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 10) {
             // AI 总结
             Button(action: {
-                if subscriptionManager.isPremium {
+                if subscriptionManager.canUseAISummary {
                     showSummary = true
                 } else {
                     showPaywall = true
@@ -165,22 +173,28 @@ struct PlayerView: View {
             }) {
                 HStack(spacing: 6) {
                     Image(systemName: "sparkles")
+                        .font(.system(size: 12))
                     Text("AI 总结")
+                        .font(.system(size: 13, weight: .medium))
                 }
-                .font(.subheadline)
-                .fontWeight(.medium)
-                .foregroundColor(.accentColor)
+                .foregroundColor(.primary)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 10)
-                .background(Color.accentColor.opacity(0.1))
-                .cornerRadius(10)
             }
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(Color(.systemBackground))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(Color.secondary.opacity(0.15), lineWidth: 0.5)
+            )
             .buttonStyle(PressableStyle())
             .disabled(speakerVM.isGeneratingSummary)
 
             // AI 伴读
             Button(action: {
-                if subscriptionManager.isPremium {
+                if subscriptionManager.canUseAICompanion {
                     showCompanion = true
                 } else {
                     showPaywall = true
@@ -188,16 +202,22 @@ struct PlayerView: View {
             }) {
                 HStack(spacing: 6) {
                     Image(systemName: "bubble.left.and.bubble.right")
+                        .font(.system(size: 12))
                     Text("AI 伴读")
+                        .font(.system(size: 13, weight: .medium))
                 }
-                .font(.subheadline)
-                .fontWeight(.medium)
-                .foregroundColor(.accentColor)
+                .foregroundColor(.primary)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 10)
-                .background(Color.accentColor.opacity(0.1))
-                .cornerRadius(10)
             }
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(Color(.systemBackground))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(Color.secondary.opacity(0.15), lineWidth: 0.5)
+            )
             .buttonStyle(PressableStyle())
         }
     }
@@ -330,18 +350,16 @@ struct PlayerView: View {
     // MARK: - Empty State
 
     private var emptyState: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 24) {
             Spacer()
 
-            // 荔枝打瞌睡
             LycheeMascotView(size: 80, state: .sleeping)
 
             VStack(spacing: 8) {
-                Text("暂无播放内容")
-                    .font(.title3)
-                    .fontWeight(.semibold)
-                Text("在书库中选择一篇文档开始朗读")
-                    .font(.subheadline)
+                Text("暂无播放")
+                    .font(.system(size: 17, weight: .medium))
+                Text("去书库选择一篇文档开始")
+                    .font(.system(size: 14))
                     .foregroundColor(.secondary)
             }
             Spacer()

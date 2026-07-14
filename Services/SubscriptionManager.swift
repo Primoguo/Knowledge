@@ -31,6 +31,45 @@ final class SubscriptionManager: ObservableObject {
     // 配置步骤：App Store Connect → 你的 App → 订阅 → 创建订阅组 → 添加月订阅 + 年订阅
     private let productIDs = ["com.knowledge.premium.monthly", "com.knowledge.premium.yearly"]
 
+    // MARK: - AI 限免配额
+
+    /// 每个 AI 功能的免费体验次数
+    static let freeTrialLimit = 1
+
+    /// AI 总结已用次数
+    var aiSummaryUsed: Int {
+        get { UserDefaults.standard.integer(forKey: "ai_summary_used") }
+        set { UserDefaults.standard.set(newValue, forKey: "ai_summary_used") }
+    }
+
+    /// AI 伴读已用次数
+    var aiCompanionUsed: Int {
+        get { UserDefaults.standard.integer(forKey: "ai_companion_used") }
+        set { UserDefaults.standard.set(newValue, forKey: "ai_companion_used") }
+    }
+
+    /// 是否可以使用 AI 总结（Premium 或有免费次数）
+    var canUseAISummary: Bool {
+        isPremium || aiSummaryUsed < Self.freeTrialLimit
+    }
+
+    /// 是否可以使用 AI 伴读（Premium 或有免费次数）
+    var canUseAICompanion: Bool {
+        isPremium || aiCompanionUsed < Self.freeTrialLimit
+    }
+
+    /// 消耗一次 AI 总结免费次数（仅非 Premium 用户）
+    func consumeAISummaryTrial() {
+        guard !isPremium else { return }
+        aiSummaryUsed += 1
+    }
+
+    /// 消耗一次 AI 伴读免费次数（仅非 Premium 用户）
+    func consumeAICompanionTrial() {
+        guard !isPremium else { return }
+        aiCompanionUsed += 1
+    }
+
     // MARK: - Init
 
     private init() {

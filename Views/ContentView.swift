@@ -22,7 +22,10 @@ struct ContentView: View {
             SettingsView(speakerVM: speakerVM)
                 .tabItem { Label("设置", systemImage: "gearshape.fill") }
         }
-        .tint(.accentColor)
+        .tint(.primary)
+        .onAppear {
+            speakerVM.modelContext = modelContext
+        }
         .alert(item: $errorHandler.currentAlert) { alert in
             Alert(title: Text(alert.title), message: Text(alert.message), dismissButton: .default(Text("确定")))
         }

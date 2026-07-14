@@ -35,7 +35,7 @@ struct CompanionView: View {
                             Text(speakerVM.state == .playing ? "暂停" : "播放")
                                 .font(.subheadline)
                         }
-                        .foregroundColor(.accentColor)
+                        .foregroundColor(.primary)
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
@@ -162,12 +162,14 @@ struct CompanionView: View {
         Button(text) {
             sendQuestion(text)
         }
-        .font(.caption)
+        .font(.system(size: 13))
         .padding(.horizontal, 12)
-        .padding(.vertical, 6)
-        .background(Color.accentColor.opacity(0.1))
-        .foregroundColor(.accentColor)
-        .cornerRadius(14)
+        .padding(.vertical, 7)
+        .foregroundColor(.primary)
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(Color.secondary.opacity(0.08))
+        )
     }
 
     // MARK: - Message Bubble
@@ -203,10 +205,10 @@ struct CompanionView: View {
                             .font(.body)
                     }
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(msg.isUser ? Color.accentColor : Color(.systemGray6))
-                .foregroundColor(msg.isUser ? .white : .primary)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 10)
+                .background(msg.isUser ? Color.primary.opacity(0.06) : Color(.systemGray6))
+                .foregroundColor(.primary)
                 .cornerRadius(16)
             }
 
@@ -228,7 +230,7 @@ struct CompanionView: View {
             Button(action: sendMessage) {
                 Image(systemName: "arrow.up.circle.fill")
                     .font(.system(size: 30))
-                    .foregroundColor(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? .gray : .accentColor)
+                    .foregroundColor(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? .gray : .primary)
             }
             .disabled(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || speakerVM.isAskingCompanion)
         }

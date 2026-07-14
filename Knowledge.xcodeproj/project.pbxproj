@@ -59,6 +59,7 @@
 		F7B29584FE152B7FF6994A55 /* SummaryCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26C68A4A417DC388729302A2 /* SummaryCardView.swift */; };
 		Z6A7B8C9D0E1F2A3B4C5D6E7F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = Z1B2C3D4E5F6A7B8C9D0E1F2A3 /* Assets.xcassets */; };
 		62D6E04ED8EB4FE5AB65FC3A /* AudioCacheService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C2B39403ADD46268C168655 /* AudioCacheService.swift */; };
+		CC112233445566778899AABB /* CompanionChat.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC112233445566778899CCDD /* CompanionChat.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -96,6 +97,7 @@
 		B5FDB6D803CD345BCC10A093 /* ErrorHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorHandler.swift; sourceTree = "<group>"; };
 		B706E258FC3352EB1EB7194E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		BD165D274BDD6BC995863DCB /* ClonedVoice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClonedVoice.swift; sourceTree = "<group>"; };
+		CC112233445566778899CCDD /* CompanionChat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanionChat.swift; sourceTree = "<group>"; };
 		C3D4E5F6A7B8C9D0E1F2A3B4 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		CD2FF9A9B2611C44593160A1 /* CosyVoiceService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CosyVoiceService.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F60001AABB0001 /* EdgeTTSService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EdgeTTSService.swift; sourceTree = "<group>"; };
@@ -219,6 +221,7 @@
 				BD165D274BDD6BC995863DCB /* ClonedVoice.swift */,
 				2741B587F01BE600A64A0CDF /* SummaryResult.swift */,
 				A64A7FA7ABE0AEBFF746D4FF /* LycheeLevelManager.swift */,
+				CC112233445566778899CCDD /* CompanionChat.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -418,6 +421,7 @@
 				EB5650EE2FFD70D5007F11D8 /* ServerAPIClient.swift in Sources */,
 				CE8713D0E7683062FC1A7C7B /* LycheeLevelManager.swift in Sources */,
 				AC498B3868DBDEF981B670CF /* LycheeMascotView.swift in Sources */,
+				CC112233445566778899AABB /* CompanionChat.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

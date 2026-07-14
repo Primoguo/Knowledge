@@ -1,6 +1,7 @@
 // Knowledge/ViewModels/SpeakerViewModel.swift
 import Foundation
 import Combine
+import SwiftData
 
 /// 主 ViewModel（Facade），对外暴露统一接口
 /// 内部将播放控制和文档管理委托给子组件
@@ -46,6 +47,9 @@ final class SpeakerViewModel: ObservableObject {
     @Published var isAskingCompanion = false
     /// 标记伴读进入时是否暂停了朗读，退出时自动恢复
     var companionPausedPlay = false
+
+    /// SwiftData 上下文（由 ContentView 注入）
+    var modelContext: ModelContext?
 
     // MARK: - Internal State
 
@@ -138,7 +142,13 @@ final class SpeakerViewModel: ObservableObject {
     func loadDocument(_ document: Document) {
         stop()
         currentDocument = document
-        resetCompanion() // 切换文档时重置伴读对话
+        // 切换文档时清除旧对话并加载新文档的历史对话
+        CompanionService.shared.resetConversation()
+        companionMessages = []
+        if let ctx = modelContext {
+            let entries = CompanionService.shared.loadConversation(documentId: document.id, context: ctx)
+            companionMessages = entries.map { CompanionMessage(content: $0.content, isUser: $0.role == "user") }
+        }
         let savedConfig = loadConfig()
 
         // 自动检测文档语言并匹配语音
@@ -268,7 +278,7 @@ final class SpeakerViewModel: ObservableObject {
     func generateSummary() {
         guard let doc = currentDocument, !doc.extractedText.isEmpty else { return }
 
-        // 如果已有缓存摘要，直接返回
+        // 如果已有缓存摘要，直接返回（不消耗免费次数）
         if let cached = doc.summary, let result = SummaryResult.fromJSON(cached) {
             summaryResult = result
             return
@@ -285,6 +295,8 @@ final class SpeakerViewModel: ObservableObject {
                     isGeneratingSummary = false
                     // 缓存到 Document
                     doc.summary = result.toJSON()
+                    // 消耗免费试用次数（仅非 Premium 用户）
+                    SubscriptionManager.shared.consumeAISummaryTrial()
                 }
             } catch {
                 await MainActor.run {
@@ -321,13 +333,18 @@ final class SpeakerViewModel: ObservableObject {
             let response = try await CompanionService.shared.ask(
                 question: question,
                 context: context,
-                documentId: currentDocument?.id.uuidString
+                documentId: currentDocument?.id.uuidString,
+                modelContext: modelContext
             )
             await MainActor.run {
                 // 移除 loading 占位，添加真实回复
                 companionMessages.removeAll { $0.isLoading }
                 companionMessages.append(CompanionMessage(content: response, isUser: false))
                 isAskingCompanion = false
+                // 消耗免费试用次数（仅非 Premium 用户，仅首次提问消耗）
+                if companionMessages.filter({ $0.isUser }).count == 1 {
+                    SubscriptionManager.shared.consumeAICompanionTrial()
+                }
             }
         } catch {
             await MainActor.run {
@@ -341,7 +358,10 @@ final class SpeakerViewModel: ObservableObject {
     /// 重置伴读对话
     func resetCompanion() {
         companionMessages.removeAll()
-        CompanionService.shared.resetConversation()
+        CompanionService.shared.resetConversation(
+            documentId: currentDocument?.id,
+            context: modelContext
+        )
     }
 
     /// 提取当前朗读位置前后的文本上下文（500 字范围）

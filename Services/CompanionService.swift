@@ -1,5 +1,6 @@
 // Knowledge/Services/CompanionService.swift
 import Foundation
+import SwiftData
 
 /// AI 伴读服务 — 边听边问的交互式对话
 /// 通过服务器中转调用通义千问，API Key 仅存储在服务器端
@@ -96,7 +97,7 @@ final class CompanionService {
     // MARK: - Public API
 
     /// 向 AI 提问（携带当前朗读上下文）
-    func ask(question: String, context: String, documentId: String? = nil) async throws -> String {
+    func ask(question: String, context: String, documentId: String? = nil, modelContext: ModelContext? = nil) async throws -> String {
         // 计算 sessionState
         let sessionState = computeSessionState(documentId: documentId)
 
@@ -129,12 +130,58 @@ final class CompanionService {
             lastDocumentId = docId
         }
 
+        // 自动持久化对话
+        if let docId = documentId, let uuid = UUID(uuidString: docId), let ctx = modelContext {
+            saveConversation(documentId: uuid, context: ctx)
+        }
+
         return response
     }
 
     /// 重置对话历史（切换文档时调用）
-    func resetConversation() {
+    func resetConversation(documentId: UUID? = nil, context: ModelContext? = nil) {
         conversationHistory.removeAll()
+        // 清除持久化的对话记录
+        if let docId = documentId, let ctx = context {
+            clearConversation(documentId: docId, context: ctx)
+        }
+    }
+
+    // MARK: - Persistence
+
+    /// 从 SwiftData 加载对话历史
+    func loadConversation(documentId: UUID, context: ModelContext) -> [ChatEntry] {
+        let predicate = #Predicate<CompanionChat> { $0.documentId == documentId }
+        let descriptor = FetchDescriptor<CompanionChat>(predicate: predicate)
+        guard let chat = try? context.fetch(descriptor).first else { return [] }
+        let entries = chat.entries
+        // 恢复 conversationHistory（用于 AI 上下文）
+        conversationHistory = entries.suffix(20).map { ["role": $0.role, "content": $0.content] }
+        return entries
+    }
+
+    /// 保存对话历史到 SwiftData
+    func saveConversation(documentId: UUID, context: ModelContext) {
+        let entries = conversationHistory.map { ChatEntry(role: $0["role"] ?? "user", content: $0["content"] ?? "") }
+        let predicate = #Predicate<CompanionChat> { $0.documentId == documentId }
+        let descriptor = FetchDescriptor<CompanionChat>(predicate: predicate)
+        if let existing = try? context.fetch(descriptor).first {
+            existing.entries = entries
+        } else {
+            let chat = CompanionChat(documentId: documentId, entries: entries)
+            context.insert(chat)
+        }
+        try? context.save()
+    }
+
+    /// 删除指定文档的对话记录
+    func clearConversation(documentId: UUID, context: ModelContext) {
+        let predicate = #Predicate<CompanionChat> { $0.documentId == documentId }
+        let descriptor = FetchDescriptor<CompanionChat>(predicate: predicate)
+        if let chat = try? context.fetch(descriptor).first {
+            context.delete(chat)
+            try? context.save()
+        }
     }
 
     // MARK: - Private Helpers

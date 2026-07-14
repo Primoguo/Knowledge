@@ -34,7 +34,7 @@ struct SummaryCardView: View {
                     Spacer()
 
                     Text("文档总结")
-                        .font(.headline)
+                        .font(.system(size: 15, weight: .semibold))
 
                     Spacer()
 
@@ -56,6 +56,7 @@ struct SummaryCardView: View {
                 }
 
                 Divider()
+                    .padding(.horizontal, 16)
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 24) {
@@ -102,23 +103,17 @@ struct SummaryCardView: View {
     // MARK: - Simple View
 
     private var simpleView: some View {
-        VStack(alignment: .leading, spacing: 24) {
+        VStack(alignment: .leading, spacing: 28) {
             // 一句话摘要
-            VStack(alignment: .leading, spacing: 10) {
-                Label("AI 摘要", systemImage: "sparkles")
-                    .font(.headline)
-                    .foregroundColor(.accentColor)
+            VStack(alignment: .leading, spacing: 12) {
+                Text("AI 摘要")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(.secondary)
 
                 Text(result.simpleContent)
-                    .font(.body)
-                    .lineSpacing(6)
+                    .font(.system(size: 16))
+                    .lineSpacing(8)
                     .foregroundColor(.primary)
-                    .padding(16)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(Color.accentColor.opacity(0.05))
-                    )
             }
 
             // 关键要点
@@ -129,7 +124,7 @@ struct SummaryCardView: View {
     // MARK: - Detailed View
 
     private var detailedView: some View {
-        VStack(alignment: .leading, spacing: 24) {
+        VStack(alignment: .leading, spacing: 32) {
             // 一句话总结
             if !result.oneLiner.isEmpty {
                 sectionCard(title: "一句话总结", icon: "sparkles", content: result.oneLiner, highlight: true)
@@ -165,84 +160,74 @@ struct SummaryCardView: View {
     private var keyPointsSection: some View {
         Group {
             if !result.keyPoints.isEmpty {
-                VStack(alignment: .leading, spacing: 10) {
-                    Label("关键要点", systemImage: "list.bullet.rectangle")
-                        .font(.headline)
-                        .foregroundColor(.accentColor)
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("关键要点")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(.secondary)
 
-                    VStack(spacing: 12) {
+                    VStack(spacing: 0) {
                         ForEach(Array(result.keyPoints.enumerated()), id: \.offset) { index, point in
                             HStack(alignment: .top, spacing: 12) {
-                                ZStack {
-                                    Circle()
-                                        .fill(Color.accentColor.opacity(0.15))
-                                        .frame(width: 24, height: 24)
-                                    Text("\(index + 1)")
-                                        .font(.caption)
-                                        .fontWeight(.bold)
-                                        .foregroundColor(.accentColor)
-                                }
+                                Text("\(index + 1)")
+                                    .font(.system(size: 13, weight: .medium))
+                                    .foregroundColor(.secondary)
+                                    .frame(width: 20, alignment: .center)
                                 Text(point)
-                                    .font(.subheadline)
+                                    .font(.system(size: 15))
                                     .lineSpacing(4)
                                     .foregroundColor(.primary)
                                 Spacer()
                             }
+                            .padding(.vertical, 10)
+
+                            if index < result.keyPoints.count - 1 {
+                                Divider()
+                            }
                         }
                     }
-                    .padding(16)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(Color(.systemGroupedBackground))
-                    )
                 }
             }
         }
     }
 
     private func sectionCard(title: String, icon: String, content: String, highlight: Bool = false) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Label(title, systemImage: icon)
-                .font(.headline)
-                .foregroundColor(.accentColor)
+        VStack(alignment: .leading, spacing: 12) {
+            Text(title)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundColor(.secondary)
 
             Text(content)
-                .font(.body)
-                .lineSpacing(6)
+                .font(.system(size: 16))
+                .lineSpacing(8)
                 .foregroundColor(.primary)
-                .padding(16)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(highlight ? Color.accentColor.opacity(0.05) : Color(.systemGroupedBackground))
-                )
         }
     }
 
     private func listSection(title: String, icon: String, items: [String], color: Color) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Label(title, systemImage: icon)
-                .font(.headline)
-                .foregroundColor(color)
+        VStack(alignment: .leading, spacing: 12) {
+            Text(title)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundColor(.secondary)
 
-            VStack(spacing: 10) {
+            VStack(spacing: 0) {
                 ForEach(Array(items.enumerated()), id: \.offset) { index, item in
                     HStack(alignment: .top, spacing: 10) {
-                        Image(systemName: "\(index + 1).circle.fill")
-                            .foregroundColor(color.opacity(0.7))
-                            .font(.subheadline)
+                        Text("\(index + 1).")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(.secondary)
+                            .frame(width: 20, alignment: .leading)
                         Text(item)
-                            .font(.subheadline)
+                            .font(.system(size: 15))
                             .lineSpacing(4)
                         Spacer()
                     }
+                    .padding(.vertical, 8)
+
+                    if index < items.count - 1 {
+                        Divider()
+                    }
                 }
             }
-            .padding(16)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color(.systemGroupedBackground))
-            )
         }
     }
 
@@ -265,11 +250,10 @@ struct SummaryCardView: View {
         Button(action: toggleReadAloud) {
             HStack(spacing: 10) {
                 if isReadingAloud {
-                    // 动态波形动画
                     HStack(spacing: 2) {
                         ForEach(0..<4, id: \.self) { i in
                             RoundedRectangle(cornerRadius: 1)
-                                .fill(Color.white)
+                                .fill(Color.primary)
                                 .frame(width: 3, height: 8)
                                 .modifier(WaveBarAnimation(delay: Double(i) * 0.15))
                         }
@@ -277,19 +261,22 @@ struct SummaryCardView: View {
                     .frame(width: 20, height: 16)
 
                     Text("暂停朗读")
-                        .font(.headline)
+                        .font(.system(size: 15, weight: .medium))
                 } else {
-                    Image(systemName: "play.circle.fill")
-                        .font(.title3)
+                    Image(systemName: "play.fill")
+                        .font(.system(size: 14))
                     Text("朗读摘要")
-                        .font(.headline)
+                        .font(.system(size: 15, weight: .medium))
                 }
             }
+            .foregroundColor(.primary)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 14)
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(Color.secondary.opacity(0.08))
+            )
         }
-        .buttonStyle(.borderedProminent)
-        .tint(isReadingAloud ? .gray : .accentColor)
         .animation(.easeInOut(duration: 0.2), value: isReadingAloud)
     }
 
@@ -345,10 +332,9 @@ struct SummaryShareCard: View {
             // 标题
             HStack {
                 Image(systemName: "sparkles")
-                    .foregroundColor(.orange)
+                    .foregroundColor(.secondary)
                 Text("AI 摘要")
-                    .font(.title2)
-                    .fontWeight(.bold)
+                    .font(.system(size: 18, weight: .semibold))
             }
 
             // 摘要内容
@@ -356,19 +342,19 @@ struct SummaryShareCard: View {
                 // 详版分享
                 if !result.oneLiner.isEmpty {
                     sectionLabel("一句话总结")
-                    Text(result.oneLiner).font(.body).lineSpacing(4)
+                    Text(result.oneLiner).font(.system(size: 15)).lineSpacing(6)
                 }
                 if !result.threeLines.isEmpty {
                     sectionLabel("三句话总结")
-                    Text(result.threeLines).font(.body).lineSpacing(4)
+                    Text(result.threeLines).font(.system(size: 15)).lineSpacing(6)
                 }
                 if !result.coreContent.isEmpty {
                     sectionLabel("核心内容")
-                    Text(result.coreContent).font(.body).lineSpacing(4)
+                    Text(result.coreContent).font(.system(size: 15)).lineSpacing(6)
                 }
             } else {
                 Text(result.simpleContent)
-                    .font(.body)
+                    .font(.system(size: 15))
                     .lineSpacing(6)
                     .foregroundColor(.primary)
             }
@@ -377,12 +363,12 @@ struct SummaryShareCard: View {
             if !result.keyPoints.isEmpty {
                 Divider()
                 VStack(alignment: .leading, spacing: 10) {
-                    Text("🔑 关键要点")
-                        .font(.headline)
+                    Text("关键要点")
+                        .font(.system(size: 14, weight: .semibold))
                     ForEach(Array(result.keyPoints.enumerated()), id: \.offset) { index, point in
                         HStack(alignment: .top, spacing: 8) {
-                            Text("\(index + 1).").fontWeight(.bold).foregroundColor(.orange)
-                            Text(point).font(.subheadline)
+                            Text("\(index + 1).").fontWeight(.medium).foregroundColor(.secondary)
+                            Text(point).font(.system(size: 14))
                         }
                     }
                 }
@@ -392,11 +378,11 @@ struct SummaryShareCard: View {
             if detailed && !result.actionItems.isEmpty {
                 Divider()
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("✅ 行动建议").font(.headline)
+                    Text("行动建议").font(.system(size: 14, weight: .semibold))
                     ForEach(Array(result.actionItems.enumerated()), id: \.offset) { index, item in
                         HStack(alignment: .top, spacing: 8) {
-                            Text("\(index + 1).").fontWeight(.bold).foregroundColor(.green)
-                            Text(item).font(.subheadline)
+                            Text("\(index + 1).").fontWeight(.medium).foregroundColor(.secondary)
+                            Text(item).font(.system(size: 14))
                         }
                     }
                 }
@@ -406,11 +392,11 @@ struct SummaryShareCard: View {
             if detailed && !result.risks.isEmpty {
                 Divider()
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("⚠️ 风险").font(.headline)
+                    Text("风险").font(.system(size: 14, weight: .semibold))
                     ForEach(Array(result.risks.enumerated()), id: \.offset) { index, item in
                         HStack(alignment: .top, spacing: 8) {
-                            Text("\(index + 1).").fontWeight(.bold).foregroundColor(.orange)
-                            Text(item).font(.subheadline)
+                            Text("\(index + 1).").fontWeight(.medium).foregroundColor(.secondary)
+                            Text(item).font(.system(size: 14))
                         }
                     }
                 }
@@ -436,9 +422,8 @@ struct SummaryShareCard: View {
 
     private func sectionLabel(_ title: String) -> some View {
         Text(title)
-            .font(.subheadline)
-            .fontWeight(.semibold)
-            .foregroundColor(.orange)
+            .font(.system(size: 13, weight: .medium))
+            .foregroundColor(.secondary)
             .padding(.top, 4)
     }
 }

@@ -1,61 +1,66 @@
 // Knowledge/Views/DocumentCardView.swift
 import SwiftUI
 
-/// 书库卡片视图 — 网格布局中的单个文档卡片
+/// 书库卡片视图 — Notion 风格：极简白底 + 细边框
 struct DocumentCardView: View {
     let document: Document
     let isPlaying: Bool
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            // 文件类型图标 + 标签
+        VStack(alignment: .leading, spacing: 12) {
+            // 文件类型图标
             HStack {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(iconColor.opacity(0.12))
-                        .frame(width: 36, height: 36)
-                    Image(systemName: document.fileType.iconName)
-                        .font(.system(size: 16))
-                        .foregroundColor(iconColor)
-                }
+                Image(systemName: document.fileType.iconName)
+                    .font(.system(size: 18, weight: .light))
+                    .foregroundColor(.secondary)
+                    .frame(width: 28, height: 28)
 
                 Spacer()
 
                 // 播放状态指示
                 if isPlaying {
-                    Image(systemName: "waveform")
-                        .font(.caption)
-                        .foregroundColor(.accentColor)
-                        .symbolEffect(.variableColor.iterative)
+                    HStack(spacing: 4) {
+                        Image(systemName: "waveform")
+                            .font(.caption2)
+                            .symbolEffect(.variableColor.iterative)
+                        Text("播放中")
+                            .font(.system(size: 10))
+                    }
+                    .foregroundColor(.accentColor)
                 }
             }
 
             // 标题
             Text(document.title)
-                .font(.system(size: 15, weight: .semibold))
+                .font(.system(size: 14, weight: .medium))
                 .lineLimit(2)
                 .multilineTextAlignment(.leading)
-                .foregroundColor(isPlaying ? .accentColor : .primary)
-                .frame(height: 40, alignment: .top)
+                .foregroundColor(.primary)
+                .frame(height: 38, alignment: .top)
+
+            Spacer(minLength: 0)
 
             // 底部信息栏
-            HStack {
-                // 文件类型标签
+            HStack(spacing: 8) {
                 Text(document.fileType.displayName)
-                    .font(.caption2)
-                    .fontWeight(.medium)
+                    .font(.system(size: 11))
                     .foregroundColor(.secondary)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(Color.secondary.opacity(0.1))
-                    .clipShape(Capsule())
+
+                Text("·")
+                    .foregroundColor(.secondary.opacity(0.4))
+
+                Text(formatLen(document.totalLength))
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
 
                 Spacer()
 
-                // 字数
-                Text(formatLen(document.totalLength))
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
+                // 进度百分比
+                if document.progress > 0 {
+                    Text("\(Int(document.progress * 100))%")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(.accentColor)
+                }
             }
 
             // 进度条（有进度时才显示）
@@ -63,46 +68,29 @@ struct DocumentCardView: View {
                 GeometryReader { geo in
                     ZStack(alignment: .leading) {
                         Capsule()
-                            .fill(Color.secondary.opacity(0.15))
-                            .frame(height: 3)
+                            .fill(Color.secondary.opacity(0.08))
+                            .frame(height: 2)
                         Capsule()
-                            .fill(Color.accentColor)
-                            .frame(width: geo.size.width * document.progress, height: 3)
+                            .fill(Color.accentColor.opacity(0.6))
+                            .frame(width: geo.size.width * document.progress, height: 2)
                     }
                 }
-                .frame(height: 3)
-            } else {
-                // 无进度时占位，保持卡片高度一致
-                Color.clear.frame(height: 3)
+                .frame(height: 2)
             }
         }
-        .padding(14)
-        .background(cardBackground)
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(Color(.systemBackground))
+        )
         .overlay(
-            RoundedRectangle(cornerRadius: 14)
-                .stroke(isPlaying ? Color.accentColor : Color.clear, lineWidth: 1.5)
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(isPlaying ? Color.accentColor.opacity(0.4) : Color.secondary.opacity(0.12), lineWidth: isPlaying ? 1.5 : 0.5)
         )
     }
 
-    // MARK: - Styles
-
-    private var cardBackground: some View {
-        RoundedRectangle(cornerRadius: 14)
-            .fill(Color(.secondarySystemGroupedBackground))
-            .shadow(color: .black.opacity(0.04), radius: 6, y: 2)
-    }
-
-    private var iconColor: Color {
-        switch document.fileType.iconColor {
-        case "red":    return .red
-        case "blue":   return .blue
-        case "green":  return .green
-        case "orange": return .orange
-        case "purple": return .purple
-        case "teal":   return .teal
-        default:       return .gray
-        }
-    }
+    // MARK: - Helpers
 
     private func formatLen(_ len: Int) -> String {
         if len >= 10000 { return String(format: "%.1f万字", Double(len) / 10000.0) }
@@ -111,12 +99,12 @@ struct DocumentCardView: View {
     }
 }
 
-/// 按压缩放按钮样式 — 点击时轻微缩小，提供触觉反馈感
+/// 按压缩放按钮样式 — 点击时轻微缩小
 struct PressableStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .scaleEffect(configuration.isPressed ? 0.96 : 1.0)
-            .animation(.spring(response: 0.3, dampingFraction: 0.6), value: configuration.isPressed)
+            .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
+            .animation(.easeOut(duration: 0.15), value: configuration.isPressed)
     }
 }
 

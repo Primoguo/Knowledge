@@ -73,18 +73,14 @@ struct SettingsView: View {
                     } else {
                         Button(action: { showPaywall = true }) {
                             HStack(spacing: 12) {
-                                ZStack {
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .fill(LinearGradient(
-                                            colors: [.accentColor.opacity(0.8), .accentColor.opacity(0.5)],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        ))
-                                        .frame(width: 40, height: 40)
-                                    Image(systemName: "sparkles")
-                                        .font(.system(size: 18))
-                                        .foregroundColor(.white)
-                                }
+                                Image(systemName: "sparkles")
+                                    .font(.system(size: 18, weight: .light))
+                                    .foregroundColor(.secondary)
+                                    .frame(width: 36, height: 36)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .fill(Color.secondary.opacity(0.08))
+                                    )
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text("解锁 Premium")
                                         .fontWeight(.semibold)
