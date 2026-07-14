@@ -20,24 +20,14 @@ final class EdgeTTSService {
         let tag: String?     // 标签，如"推荐"、"新闻"
 
         static let recommendedChinese: [EdgeVoice] = [
-            // 女声（靠前）
+            // 女声
             EdgeVoice(id: "zh-CN-XiaoxiaoNeural",   name: "晓晓",   gender: "Female", tag: "推荐"),
             EdgeVoice(id: "zh-CN-XiaoyiNeural",     name: "晓伊",   gender: "Female", tag: nil),
-            EdgeVoice(id: "zh-CN-XiaochenNeural",   name: "晓辰",   gender: "Female", tag: nil),
-            EdgeVoice(id: "zh-CN-XiaohanNeural",    name: "晓涵",   gender: "Female", tag: nil),
-            EdgeVoice(id: "zh-CN-XiaomengNeural",   name: "晓梦",   gender: "Female", tag: nil),
-            EdgeVoice(id: "zh-CN-XiaomoNeural",     name: "晓墨",   gender: "Female", tag: nil),
-            EdgeVoice(id: "zh-CN-XiaoruiNeural",    name: "晓睿",   gender: "Female", tag: nil),
-            EdgeVoice(id: "zh-CN-XiaoshuangNeural", name: "晓双",   gender: "Female", tag: nil),
-            EdgeVoice(id: "zh-CN-XiaoxuanNeural",   name: "晓萱",   gender: "Female", tag: nil),
-            EdgeVoice(id: "zh-CN-XiaoyanNeural",     name: "晓颜",   gender: "Female", tag: nil),
             // 男声
             EdgeVoice(id: "zh-CN-YunyangNeural",    name: "云扬",   gender: "Male",   tag: "新闻"),
             EdgeVoice(id: "zh-CN-YunxiNeural",      name: "云希",   gender: "Male",   tag: nil),
             EdgeVoice(id: "zh-CN-YunjianNeural",    name: "云健",   gender: "Male",   tag: nil),
             EdgeVoice(id: "zh-CN-YunxiaNeural",     name: "云夏",   gender: "Male",   tag: nil),
-            EdgeVoice(id: "zh-CN-YunyeNeural",      name: "云野",   gender: "Male",   tag: nil),
-            EdgeVoice(id: "zh-CN-YunzeNeural",      name: "云泽",   gender: "Male",   tag: nil),
         ]
 
         static let recommendedCantonese: [EdgeVoice] = [
@@ -52,6 +42,74 @@ final class EdgeTTSService {
         EdgeVoice.recommendedChinese + EdgeVoice.recommendedCantonese
     }
 
+    // MARK: - 动态音色列表
+
+    /// 音色 ID → 中文显示名映射
+    private static let displayNameMap: [String: String] = [
+        "zh-CN-XiaoxiaoNeural": "晓晓",
+        "zh-CN-XiaoyiNeural": "晓伊",
+        "zh-CN-XiaoxuanNeural": "晓萱",
+        "zh-CN-YunyangNeural": "云扬",
+        "zh-CN-YunxiNeural": "云希",
+        "zh-CN-YunjianNeural": "云健",
+        "zh-CN-YunxiaNeural": "云夏",
+        "zh-HK-HiuGaaiNeural": "曉佳",
+        "zh-HK-HiuMaanNeural": "曉曼",
+        "zh-HK-WanLungNeural": "雲龍",
+        "zh-CN-liaoning-XiaobeiNeural": "小北",
+        "zh-TW-HsiaoChenNeural": "曉臻",
+        "zh-TW-HsiaoYuNeural": "曉雨",
+        "zh-TW-YunJheNeural": "雲哲",
+        "zh-CN-shaanxi-XiaoniNeural": "小妮",
+    ]
+
+    /// 音色标签映射
+    private static let tagMap: [String: String] = [
+        "zh-CN-XiaoxiaoNeural": "推荐",
+        "zh-CN-YunyangNeural": "新闻",
+        "zh-HK-HiuGaaiNeural": "粤语",
+        "zh-HK-HiuMaanNeural": "粤语",
+        "zh-HK-WanLungNeural": "粤语",
+        "zh-CN-liaoning-XiaobeiNeural": "辽宁",
+        "zh-TW-HsiaoChenNeural": "台湾",
+        "zh-TW-HsiaoYuNeural": "台湾",
+        "zh-TW-YunJheNeural": "台湾",
+        "zh-CN-shaanxi-XiaoniNeural": "陕西",
+    ]
+
+    /// 从服务器实时获取可用音色列表
+    /// 服务器会自动过滤已下线的音色，客户端无需维护黑名单
+    func fetchAvailableVoices() async throws -> [EdgeVoice] {
+        let url = URL(string: "\(baseURL)/voices")!
+        let (data, response) = try await URLSession.shared.data(from: url)
+
+        guard let httpResp = response as? HTTPURLResponse, httpResp.statusCode == 200 else {
+            throw EdgeTTSError.invalidResponse
+        }
+
+        struct ServerVoice: Codable {
+            let name: String
+            let gender: String
+        }
+
+        let serverVoices = try JSONDecoder().decode([ServerVoice].self, from: data)
+
+        return serverVoices.map { sv in
+            EdgeVoice(
+                id: sv.name,
+                name: Self.displayNameMap[sv.name] ?? sv.name,
+                gender: sv.gender,
+                tag: Self.tagMap[sv.name]
+            )
+        }
+    }
+
+    /// 检查指定音色是否在线（从服务器获取列表后比对）
+    func isVoiceAvailable(_ voiceId: String) async -> Bool {
+        guard let voices = try? await fetchAvailableVoices() else { return false }
+        return voices.contains(where: { $0.id == voiceId })
+    }
+
     // MARK: - 合成
 
     /// 调用 Edge TTS 服务合成语音
@@ -61,6 +119,14 @@ final class EdgeTTSService {
     ///   - rate: 语速，内部值 0.1~2.0，会转换为 Edge TTS 的百分比格式
     /// - Returns: MP3 音频数据
     func synthesize(text: String, voice: String, rate: Float = 0.5) async throws -> Data {
+        let cache = AudioCacheService.shared
+        
+        // 1. 查缓存命中则直接返回
+        if let cached = cache.getCachedAudio(text: text, voice: voice, rate: rate) {
+            return cached
+        }
+        
+        // 2. 未命中，请求服务器
         let edgeRate = convertRate(rate)
 
         // POST 请求 — 避免长文本导致 URL 超限（414 URI Too Long）
@@ -86,6 +152,9 @@ final class EdgeTTSService {
         guard !data.isEmpty else {
             throw EdgeTTSError.noAudioData
         }
+
+        // 3. 写入缓存（异步，不阻塞播放）
+        cache.cacheAudio(data, text: text, voice: voice, rate: rate)
 
         return data
     }

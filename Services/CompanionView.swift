@@ -7,26 +7,33 @@ struct CompanionView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var inputText = ""
     @FocusState private var inputFocused: Bool
+    @State private var dragOffset: CGFloat = 0
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                // 消息列表
-                messagesList
+                // 下拉指示器（页面最顶部）
+                pullHandle
 
-                Divider()
-
-                // 输入栏
-                inputBar
-            }
-            .navigationTitle("AI 伴读")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("继续听") { dismiss() }
+                // 自定义标题栏
+                HStack {
+                    Button(action: togglePlayback) {
+                        HStack(spacing: 4) {
+                            Image(systemName: speakerVM.state == .playing ? "pause.fill" : "play.fill")
+                                .font(.system(size: 12))
+                            Text(speakerVM.state == .playing ? "暂停" : "播放")
+                                .font(.subheadline)
+                        }
                         .foregroundColor(.accentColor)
-                }
-                ToolbarItem(placement: .topBarTrailing) {
+                    }
+
+                    Spacer()
+
+                    Text("AI 伴读")
+                        .font(.headline)
+
+                    Spacer()
+
                     Menu {
                         Button(role: .destructive) {
                             speakerVM.resetCompanion()
@@ -37,21 +44,75 @@ struct CompanionView: View {
                         Image(systemName: "ellipsis.circle")
                     }
                 }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+
+                Divider()
+
+                // 消息列表
+                messagesList
+
+                Divider()
+
+                // 输入栏
+                inputBar
             }
+            .toolbar { } // 清空系统导航栏
+            .offset(y: max(0, dragOffset))
+            .gesture(
+                DragGesture()
+                    .onChanged { value in
+                        if value.translation.height > 0 {
+                            dragOffset = value.translation.height
+                        }
+                    }
+                    .onEnded { value in
+                        if value.translation.height > 100 {
+                            dismiss()
+                        } else {
+                            withAnimation(.spring(response: 0.3)) {
+                                dragOffset = 0
+                            }
+                        }
+                    }
+            )
             .onAppear {
-                // 进入伴读时暂停朗读
-                if speakerVM.state == .playing {
-                    speakerVM.pause()
-                }
                 inputFocused = true
+                // 进入伴读时不自动暂停——支持边听边问
             }
             .onDisappear {
-                // 退出伴读时恢复朗读
-                if speakerVM.companionPausedPlay {
-                    speakerVM.play()
-                    speakerVM.companionPausedPlay = false
-                }
+                // 退出伴读时不再自动恢复，播放状态由用户控制
             }
+        }
+    }
+
+    // MARK: - Pull Handle
+
+    /// 下拉指示器：提示用户可以下拉回到播放页
+    private var pullHandle: some View {
+        VStack(spacing: 2) {
+            Capsule()
+                .fill(Color.secondary.opacity(0.3))
+                .frame(width: 36, height: 4)
+                .padding(.top, 4)
+            Text("↓ 下拉回到播放页")
+                .font(.caption2)
+                .foregroundColor(.secondary.opacity(0.5))
+        }
+        .frame(maxWidth: .infinity)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            dismiss()
+        }
+    }
+
+    // MARK: - Playback Toggle
+
+    private func togglePlayback() {
+        if speakerVM.state == .playing {
+            speakerVM.pause()
+        } else {
+            speakerVM.play()
         }
     }
 
@@ -93,7 +154,7 @@ struct CompanionView: View {
             Text("AI 伴读助手")
                 .font(.headline)
 
-            Text("你可以问我关于当前内容的任何问题\n朗读会自动暂停，回答完后可以继续")
+            Text("你可以问我关于当前内容的任何问题\n边听边问，随时互动")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
@@ -143,7 +204,7 @@ struct CompanionView: View {
                                 .foregroundColor(.secondary)
                         }
                     } else {
-                        Text(msg.content)
+                        Text(parseMarkdown(msg.content))
                             .font(.body)
                     }
                 }
@@ -182,6 +243,13 @@ struct CompanionView: View {
     }
 
     // MARK: - Actions
+
+    /// 解析 Markdown 为 AttributedString（支持加粗、斜体、列表等）
+    private func parseMarkdown(_ text: String) -> AttributedString {
+        var options = AttributedString.MarkdownParsingOptions()
+        options.interpretedSyntax = .inlineOnlyPreservingWhitespace
+        return (try? AttributedString(markdown: text, options: options)) ?? AttributedString(text)
+    }
 
     private func sendMessage() {
         let text = inputText.trimmingCharacters(in: .whitespacesAndNewlines)

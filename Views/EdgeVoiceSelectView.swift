@@ -9,27 +9,68 @@ struct EdgeVoiceSelectView: View {
     @State private var selectedVoiceId: String = "zh-CN-XiaoxiaoNeural"
     @State private var isTesting = false
 
+    // 动态音色列表
+    @State private var mandarinVoices: [EdgeTTSService.EdgeVoice] = EdgeTTSService.EdgeVoice.recommendedChinese
+    @State private var cantoneseVoices: [EdgeTTSService.EdgeVoice] = EdgeTTSService.EdgeVoice.recommendedCantonese
+    @State private var dialectVoices: [EdgeTTSService.EdgeVoice] = []
+    @State private var isLoading = true
+    @State private var loadError: String?
+
     private let service = EdgeTTSService.shared
 
     var body: some View {
         NavigationStack {
             List {
-                // 普通话音色
-                Section {
-                    ForEach(EdgeTTSService.EdgeVoice.recommendedChinese) { voice in
-                        voiceRow(voice)
+                // 加载状态
+                if isLoading {
+                    Section {
+                        HStack {
+                            ProgressView()
+                            Text("正在获取可用音色...").foregroundColor(.secondary)
+                        }
                     }
-                } header: {
-                    Label("普通话", systemImage: "waveform")
-                }
+                } else {
+                    // 普通话音色
+                    if !mandarinVoices.isEmpty {
+                        Section {
+                            ForEach(mandarinVoices) { voice in
+                                voiceRow(voice)
+                            }
+                        } header: {
+                            Label("普通话", systemImage: "waveform")
+                        }
+                    }
 
-                // 粤语音色
-                Section {
-                    ForEach(EdgeTTSService.EdgeVoice.recommendedCantonese) { voice in
-                        voiceRow(voice)
+                    // 粤语音色
+                    if !cantoneseVoices.isEmpty {
+                        Section {
+                            ForEach(cantoneseVoices) { voice in
+                                voiceRow(voice)
+                            }
+                        } header: {
+                            Label("粤语", systemImage: "waveform")
+                        }
                     }
-                } header: {
-                    Label("粤语", systemImage: "waveform")
+
+                    // 方言音色
+                    if !dialectVoices.isEmpty {
+                        Section {
+                            ForEach(dialectVoices) { voice in
+                                voiceRow(voice)
+                            }
+                        } header: {
+                            Label("方言", systemImage: "waveform")
+                        }
+                    }
+
+                    // 加载失败提示
+                    if let error = loadError {
+                        Section {
+                            Label(error, systemImage: "exclamationmark.triangle")
+                                .foregroundColor(.orange)
+                                .font(.caption)
+                        }
+                    }
                 }
             }
             .navigationTitle("云端音色")
@@ -50,6 +91,7 @@ struct EdgeVoiceSelectView: View {
                 if let current = speakerVM.voiceConfig.edgeVoiceId {
                     selectedVoiceId = current
                 }
+                loadVoices()
             }
         }
     }
@@ -112,6 +154,53 @@ struct EdgeVoiceSelectView: View {
 
     // MARK: - Actions
 
+    /// 从服务器动态加载可用音色列表
+    private func loadVoices() {
+        isLoading = true
+        loadError = nil
+        Task {
+            do {
+                let voices = try await service.fetchAvailableVoices()
+
+                // 按 Locale 分组
+                var mandarin: [EdgeTTSService.EdgeVoice] = []
+                var cantonese: [EdgeTTSService.EdgeVoice] = []
+                var dialect: [EdgeTTSService.EdgeVoice] = []
+
+                for v in voices {
+                    if v.id.hasPrefix("zh-HK") {
+                        cantonese.append(v)
+                    } else if v.id.contains("liaoning") || v.id.contains("shaanxi") || v.id.hasPrefix("zh-TW") {
+                        dialect.append(v)
+                    } else {
+                        mandarin.append(v)
+                    }
+                }
+
+                await MainActor.run {
+                    self.mandarinVoices = mandarin
+                    self.cantoneseVoices = cantonese
+                    self.dialectVoices = dialect
+                    self.isLoading = false
+
+                    // 检查当前选中的音色是否仍在可用列表中
+                    if !voices.contains(where: { $0.id == selectedVoiceId }) {
+                        // 音色已下线，回退到默认
+                        selectedVoiceId = "zh-CN-XiaoxiaoNeural"
+                        loadError = "\"\(selectedVoiceId)\" 已下线，已切换到默认音色"
+                    }
+                }
+                print("🎤 加载了 \(voices.count) 个可用音色")
+            } catch {
+                await MainActor.run {
+                    self.isLoading = false
+                    self.loadError = "无法加载音色列表，显示本地缓存"
+                }
+                print("⚠️ 加载音色列表失败: \(error)")
+            }
+        }
+    }
+
     private func applyVoice() {
         var config = speakerVM.voiceConfig
         config.engine = .edgeTTS
@@ -158,6 +247,7 @@ struct EdgeVoiceSelectView: View {
         case "推荐": return Color.accentColor.opacity(0.15)
         case "新闻": return Color.blue.opacity(0.15)
         case "粤语": return Color.orange.opacity(0.15)
+        case "辽宁", "台湾", "陕西": return Color.purple.opacity(0.15)
         default: return Color.gray.opacity(0.15)
         }
     }
@@ -167,6 +257,7 @@ struct EdgeVoiceSelectView: View {
         case "推荐": return .accentColor
         case "新闻": return .blue
         case "粤语": return .orange
+        case "辽宁", "台湾", "陕西": return .purple
         default: return .secondary
         }
     }

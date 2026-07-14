@@ -68,6 +68,13 @@ final class CosyVoiceSynthesizer: NSObject, SpeechSynthesizerProtocol {
         isSynthesizing = false
     }
 
+    func updateRate(_ rate: Float) {
+        currentConfig.rate = rate
+        // CosyVoice 同样用 AVAudioPlayer，可以直接改速率
+        audioPlayer?.enableRate = true
+        audioPlayer?.rate = max(0.5, min(2.0, rate))
+    }
+
     func skipForward(by seconds: TimeInterval) {
         guard let player = audioPlayer else { return }
         let newTime = min(player.currentTime + seconds, player.duration)
@@ -198,6 +205,7 @@ final class CosyVoiceSynthesizer: NSObject, SpeechSynthesizerProtocol {
         do {
             audioPlayer = try AVAudioPlayer(contentsOf: url)
             audioPlayer?.delegate = self
+            audioPlayer?.enableRate = true
             audioPlayer?.play()
 
             // 发送位置和范围更新

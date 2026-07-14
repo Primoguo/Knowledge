@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		CE8713D0E7683062FC1A7C7B /* LycheeLevelManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A64A7FA7ABE0AEBFF746D4FF /* LycheeLevelManager.swift */; };
+
+		AC498B3868DBDEF981B670CF /* LycheeMascotView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A509AEA20935F1364E7F0687 /* LycheeMascotView.swift */; };
+
 		0194D25DE4933223F1FD5C63 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 178E2B8E17719705B9B76D0D /* AppDelegate.swift */; };
 		0A1B2C3D4E5F6A7B8C9D0E1F /* ShareExtensionHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A2B3C4D5E6F7A8B9C0D1E2F /* ShareExtensionHandler.swift */; };
 		1ED9AE877F6B92AE3A311987 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FE0F01778A82A0CDF274BF0 /* SettingsView.swift */; };
@@ -54,9 +58,14 @@
 		F56DF3AE955D0B7687C889DB /* VoiceCloneView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F0F5553C0145BB8213C1372 /* VoiceCloneView.swift */; };
 		F7B29584FE152B7FF6994A55 /* SummaryCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26C68A4A417DC388729302A2 /* SummaryCardView.swift */; };
 		Z6A7B8C9D0E1F2A3B4C5D6E7F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = Z1B2C3D4E5F6A7B8C9D0E1F2A3 /* Assets.xcassets */; };
+		62D6E04ED8EB4FE5AB65FC3A /* AudioCacheService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C2B39403ADD46268C168655 /* AudioCacheService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		A64A7FA7ABE0AEBFF746D4FF /* LycheeLevelManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LycheeLevelManager.swift; sourceTree = "<group>"; };
+
+		A509AEA20935F1364E7F0687 /* LycheeMascotView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LycheeMascotView.swift; sourceTree = "<group>"; };
+
 		010FCAC7A1C418C1FDDD0BC3 /* SpeakerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeakerViewModel.swift; sourceTree = "<group>"; };
 		178E2B8E17719705B9B76D0D /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		1A2B3C4D5E6F7A8B9C0D1E2F /* ShareExtensionHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareExtensionHandler.swift; sourceTree = "<group>"; };
@@ -108,6 +117,7 @@
 		F0DA3FA5CB454C77B3E28FA6 /* ThemeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeManager.swift; sourceTree = "<group>"; };
 		F5BF48AA40CAD7891EB709FC /* Knowledge.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Knowledge.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		Z1B2C3D4E5F6A7B8C9D0E1F2A3 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		5C2B39403ADD46268C168655 /* AudioCacheService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioCacheService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -160,6 +170,7 @@
 				9BE56C7556829E5992850159 /* CosyVoiceSynthesizer.swift */,
 				A1B2C3D4E5F60001AABB0001 /* EdgeTTSService.swift */,
 				A1B2C3D4E5F60002AABB0001 /* EdgeTTSSynthesizer.swift */,
+				5C2B39403ADD46268C168655 /* AudioCacheService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -207,6 +218,7 @@
 				24681123362549C2B5920A14 /* ThemeMode.swift */,
 				BD165D274BDD6BC995863DCB /* ClonedVoice.swift */,
 				2741B587F01BE600A64A0CDF /* SummaryResult.swift */,
+				A64A7FA7ABE0AEBFF746D4FF /* LycheeLevelManager.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -255,6 +267,7 @@
 				6F0F5553C0145BB8213C1372 /* VoiceCloneView.swift */,
 				A1FF96F1D51F3ADFDC9934A4 /* VoiceSelectView.swift */,
 				EBF368582FFD0CCE001AEF1A /* SystemVoiceSelectView.swift */,
+				A509AEA20935F1364E7F0687 /* LycheeMascotView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -369,6 +382,7 @@
 				9CD5C7E64BF5AF50AE79E892 /* LanguageDetector.swift in Sources */,
 				E69554A142DFDE312E8A54E8 /* NowPlayingService.swift in Sources */,
 				F369DB20693DA0E82EBE1FF9 /* SpeechService.swift in Sources */,
+				62D6E04ED8EB4FE5AB65FC3A /* AudioCacheService.swift in Sources */,
 				77281A89A8ECA8D030EF80BC /* SpeechSynthesizerProtocol.swift in Sources */,
 				E448FACB9627E10892C3E3B0 /* TextExtractionService.swift in Sources */,
 				553ECC30484D9C731164235D /* DocumentPicker.swift in Sources */,
@@ -402,6 +416,8 @@
 				F56DF3AE955D0B7687C889DB /* VoiceCloneView.swift in Sources */,
 				61FB6C58D0D46A5E28B16618 /* VoiceSelectView.swift in Sources */,
 				EB5650EE2FFD70D5007F11D8 /* ServerAPIClient.swift in Sources */,
+				CE8713D0E7683062FC1A7C7B /* LycheeLevelManager.swift in Sources */,
+				AC498B3868DBDEF981B670CF /* LycheeMascotView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

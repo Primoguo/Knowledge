@@ -224,21 +224,14 @@ struct DocumentListView: View {
         VStack(spacing: 24) {
             Spacer()
             
-            // 品牌化图标
-            ZStack {
-                Circle()
-                    .fill(Color.accentColor.opacity(0.1))
-                    .frame(width: 100, height: 100)
-                Image(systemName: "book.fill")
-                    .font(.system(size: 40))
-                    .foregroundColor(.accentColor)
-            }
+            // 荔枝吉祥物（摇摆招手）
+            LycheeMascotView(size: 100, state: .waving)
             
             VStack(spacing: 8) {
                 Text("书库还是空的")
                     .font(.title3)
                     .fontWeight(.semibold)
-                Text("导入文档，开始你的听书之旅")
+                Text("把书丢给我吧~")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
             }

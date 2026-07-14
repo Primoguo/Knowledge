@@ -1,133 +1,469 @@
 // Knowledge/Views/SummaryCardView.swift
 import SwiftUI
 
+/// 摘要展示模式
+enum SummaryMode: String, CaseIterable {
+    case simple = "简版"
+    case detailed = "详版"
+}
+
 /// AI 摘要展示卡片
 struct SummaryCardView: View {
     let result: SummaryResult
-    let onReadAloud: () -> Void
+    let onReadAloud: (Bool) -> Void
+    let onStopAloud: (() -> Void)?
     @Environment(\.dismiss) private var dismiss
+    @State private var dragOffset: CGFloat = 0
+    @State private var isReadingAloud = false
+    @State private var showShareSheet = false
+    @State private var shareImage: UIImage?
+    @State private var mode: SummaryMode = .simple
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 24) {
-                    // 摘要正文
-                    VStack(alignment: .leading, spacing: 10) {
-                        Label("AI 摘要", systemImage: "sparkles")
-                            .font(.headline)
-                            .foregroundColor(.accentColor)
+            VStack(spacing: 0) {
+                // 下拉指示器（页面最顶部）
+                pullHandle
 
-                        Text(result.content)
-                            .font(.body)
-                            .lineSpacing(6)
-                            .foregroundColor(.primary)
-                            .padding(16)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(Color.accentColor.opacity(0.05))
-                            )
+                // 自定义标题栏
+                HStack {
+                    Button(action: shareSummary) {
+                        Image(systemName: "square.and.arrow.up")
                     }
 
-                    // 关键要点
-                    if !result.keyPoints.isEmpty {
-                        VStack(alignment: .leading, spacing: 10) {
-                            Label("关键要点", systemImage: "list.bullet.rectangle")
-                                .font(.headline)
-                                .foregroundColor(.accentColor)
+                    Spacer()
 
-                            VStack(spacing: 12) {
-                                ForEach(Array(result.keyPoints.enumerated()), id: \.offset) { index, point in
-                                    HStack(alignment: .top, spacing: 12) {
-                                        ZStack {
-                                            Circle()
-                                                .fill(Color.accentColor.opacity(0.15))
-                                                .frame(width: 24, height: 24)
-                                            Text("\(index + 1)")
-                                                .font(.caption)
-                                                .fontWeight(.bold)
-                                                .foregroundColor(.accentColor)
-                                        }
-                                        Text(point)
-                                            .font(.subheadline)
-                                            .lineSpacing(4)
-                                            .foregroundColor(.primary)
-                                        Spacer()
-                                    }
-                                }
-                            }
-                            .padding(16)
-                            .background(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(Color(.systemGroupedBackground))
-                            )
-                        }
-                    }
+                    Text("文档总结")
+                        .font(.headline)
 
-                    // 操作按钮
-                    VStack(spacing: 12) {
-                        Button(action: onReadAloud) {
-                            Label("朗读摘要", systemImage: "play.circle.fill")
-                                .font(.headline)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 14)
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .tint(.accentColor)
-                    }
-                    .padding(.top, 8)
-                }
-                .padding(24)
-            }
-            .navigationTitle("文档总结")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
+                    Spacer()
+
                     Button("完成") { dismiss() }
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+
+                // 简版/详版切换（仅当有详版内容时显示）
+                if result.hasDetailed {
+                    Picker("模式", selection: $mode) {
+                        ForEach(SummaryMode.allCases, id: \.self) { m in
+                            Text(m.rawValue).tag(m)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 8)
+                }
+
+                Divider()
+
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 24) {
+                        if mode == .simple {
+                            simpleView
+                        } else {
+                            detailedView
+                        }
+
+                        // 朗读按钮
+                        readAloudButton
+                            .padding(.top, 8)
+                    }
+                    .padding(24)
+                }
+            }
+            .toolbar { }
+            .offset(y: max(0, dragOffset))
+            .gesture(
+                DragGesture()
+                    .onChanged { value in
+                        if value.translation.height > 0 {
+                            dragOffset = value.translation.height
+                        }
+                    }
+                    .onEnded { value in
+                        if value.translation.height > 100 {
+                            dismiss()
+                        } else {
+                            withAnimation(.spring(response: 0.3)) {
+                                dragOffset = 0
+                            }
+                        }
+                    }
+            )
+            .sheet(isPresented: $showShareSheet) {
+                if let img = shareImage {
+                    ShareSheet(items: [img])
                 }
             }
         }
     }
+
+    // MARK: - Simple View
+
+    private var simpleView: some View {
+        VStack(alignment: .leading, spacing: 24) {
+            // 一句话摘要
+            VStack(alignment: .leading, spacing: 10) {
+                Label("AI 摘要", systemImage: "sparkles")
+                    .font(.headline)
+                    .foregroundColor(.accentColor)
+
+                Text(result.simpleContent)
+                    .font(.body)
+                    .lineSpacing(6)
+                    .foregroundColor(.primary)
+                    .padding(16)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.accentColor.opacity(0.05))
+                    )
+            }
+
+            // 关键要点
+            keyPointsSection
+        }
+    }
+
+    // MARK: - Detailed View
+
+    private var detailedView: some View {
+        VStack(alignment: .leading, spacing: 24) {
+            // 一句话总结
+            if !result.oneLiner.isEmpty {
+                sectionCard(title: "一句话总结", icon: "sparkles", content: result.oneLiner, highlight: true)
+            }
+
+            // 三句话总结
+            if !result.threeLines.isEmpty {
+                sectionCard(title: "三句话总结", icon: "text.alignleft", content: result.threeLines)
+            }
+
+            // 核心内容
+            if !result.coreContent.isEmpty {
+                sectionCard(title: "核心内容", icon: "doc.text", content: result.coreContent)
+            }
+
+            // 关键要点
+            keyPointsSection
+
+            // 行动建议
+            if !result.actionItems.isEmpty {
+                listSection(title: "行动建议", icon: "checklist", items: result.actionItems, color: .green)
+            }
+
+            // 风险
+            if !result.risks.isEmpty {
+                listSection(title: "风险", icon: "exclamationmark.triangle", items: result.risks, color: .orange)
+            }
+        }
+    }
+
+    // MARK: - Reusable Sections
+
+    private var keyPointsSection: some View {
+        Group {
+            if !result.keyPoints.isEmpty {
+                VStack(alignment: .leading, spacing: 10) {
+                    Label("关键要点", systemImage: "list.bullet.rectangle")
+                        .font(.headline)
+                        .foregroundColor(.accentColor)
+
+                    VStack(spacing: 12) {
+                        ForEach(Array(result.keyPoints.enumerated()), id: \.offset) { index, point in
+                            HStack(alignment: .top, spacing: 12) {
+                                ZStack {
+                                    Circle()
+                                        .fill(Color.accentColor.opacity(0.15))
+                                        .frame(width: 24, height: 24)
+                                    Text("\(index + 1)")
+                                        .font(.caption)
+                                        .fontWeight(.bold)
+                                        .foregroundColor(.accentColor)
+                                }
+                                Text(point)
+                                    .font(.subheadline)
+                                    .lineSpacing(4)
+                                    .foregroundColor(.primary)
+                                Spacer()
+                            }
+                        }
+                    }
+                    .padding(16)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color(.systemGroupedBackground))
+                    )
+                }
+            }
+        }
+    }
+
+    private func sectionCard(title: String, icon: String, content: String, highlight: Bool = false) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Label(title, systemImage: icon)
+                .font(.headline)
+                .foregroundColor(.accentColor)
+
+            Text(content)
+                .font(.body)
+                .lineSpacing(6)
+                .foregroundColor(.primary)
+                .padding(16)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(highlight ? Color.accentColor.opacity(0.05) : Color(.systemGroupedBackground))
+                )
+        }
+    }
+
+    private func listSection(title: String, icon: String, items: [String], color: Color) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Label(title, systemImage: icon)
+                .font(.headline)
+                .foregroundColor(color)
+
+            VStack(spacing: 10) {
+                ForEach(Array(items.enumerated()), id: \.offset) { index, item in
+                    HStack(alignment: .top, spacing: 10) {
+                        Image(systemName: "\(index + 1).circle.fill")
+                            .foregroundColor(color.opacity(0.7))
+                            .font(.subheadline)
+                        Text(item)
+                            .font(.subheadline)
+                            .lineSpacing(4)
+                        Spacer()
+                    }
+                }
+            }
+            .padding(16)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color(.systemGroupedBackground))
+            )
+        }
+    }
+
+    // MARK: - Pull Handle
+
+    private var pullHandle: some View {
+        VStack(spacing: 2) {
+            Capsule()
+                .fill(Color.secondary.opacity(0.3))
+                .frame(width: 36, height: 4)
+                .padding(.top, 4)
+                .padding(.bottom, 2)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    // MARK: - Read Aloud Button
+
+    private var readAloudButton: some View {
+        Button(action: toggleReadAloud) {
+            HStack(spacing: 10) {
+                if isReadingAloud {
+                    // 动态波形动画
+                    HStack(spacing: 2) {
+                        ForEach(0..<4, id: \.self) { i in
+                            RoundedRectangle(cornerRadius: 1)
+                                .fill(Color.white)
+                                .frame(width: 3, height: 8)
+                                .modifier(WaveBarAnimation(delay: Double(i) * 0.15))
+                        }
+                    }
+                    .frame(width: 20, height: 16)
+
+                    Text("暂停朗读")
+                        .font(.headline)
+                } else {
+                    Image(systemName: "play.circle.fill")
+                        .font(.title3)
+                    Text("朗读摘要")
+                        .font(.headline)
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 14)
+        }
+        .buttonStyle(.borderedProminent)
+        .tint(isReadingAloud ? .gray : .accentColor)
+        .animation(.easeInOut(duration: 0.2), value: isReadingAloud)
+    }
+
+    private func toggleReadAloud() {
+        if isReadingAloud {
+            isReadingAloud = false
+            onStopAloud?()
+        } else {
+            isReadingAloud = true
+            onReadAloud(mode == .detailed)
+        }
+    }
+
+    // MARK: - Share
+
+    private func shareSummary() {
+        let renderer = ImageRenderer(content: SummaryShareCard(result: result, detailed: mode == .detailed))
+        renderer.scale = UIScreen.main.scale
+        if let uiImage = renderer.uiImage {
+            shareImage = uiImage
+            showShareSheet = true
+        }
+    }
+}
+
+// MARK: - Wave Bar Animation
+
+struct WaveBarAnimation: ViewModifier {
+    let delay: Double
+    @State private var animating = false
+
+    func body(content: Content) -> some View {
+        content
+            .scaleEffect(y: animating ? 1.8 : 0.5, anchor: .center)
+            .animation(
+                .easeInOut(duration: 0.5)
+                .repeatForever(autoreverses: true)
+                .delay(delay),
+                value: animating
+            )
+            .onAppear { animating = true }
+    }
+}
+
+// MARK: - Share Card (for ImageRenderer)
+
+struct SummaryShareCard: View {
+    let result: SummaryResult
+    var detailed: Bool = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            // 标题
+            HStack {
+                Image(systemName: "sparkles")
+                    .foregroundColor(.orange)
+                Text("AI 摘要")
+                    .font(.title2)
+                    .fontWeight(.bold)
+            }
+
+            // 摘要内容
+            if detailed && !result.oneLiner.isEmpty {
+                // 详版分享
+                if !result.oneLiner.isEmpty {
+                    sectionLabel("一句话总结")
+                    Text(result.oneLiner).font(.body).lineSpacing(4)
+                }
+                if !result.threeLines.isEmpty {
+                    sectionLabel("三句话总结")
+                    Text(result.threeLines).font(.body).lineSpacing(4)
+                }
+                if !result.coreContent.isEmpty {
+                    sectionLabel("核心内容")
+                    Text(result.coreContent).font(.body).lineSpacing(4)
+                }
+            } else {
+                Text(result.simpleContent)
+                    .font(.body)
+                    .lineSpacing(6)
+                    .foregroundColor(.primary)
+            }
+
+            // 关键要点
+            if !result.keyPoints.isEmpty {
+                Divider()
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("🔑 关键要点")
+                        .font(.headline)
+                    ForEach(Array(result.keyPoints.enumerated()), id: \.offset) { index, point in
+                        HStack(alignment: .top, spacing: 8) {
+                            Text("\(index + 1).").fontWeight(.bold).foregroundColor(.orange)
+                            Text(point).font(.subheadline)
+                        }
+                    }
+                }
+            }
+
+            // 行动建议（详版）
+            if detailed && !result.actionItems.isEmpty {
+                Divider()
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("✅ 行动建议").font(.headline)
+                    ForEach(Array(result.actionItems.enumerated()), id: \.offset) { index, item in
+                        HStack(alignment: .top, spacing: 8) {
+                            Text("\(index + 1).").fontWeight(.bold).foregroundColor(.green)
+                            Text(item).font(.subheadline)
+                        }
+                    }
+                }
+            }
+
+            // 风险（详版）
+            if detailed && !result.risks.isEmpty {
+                Divider()
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("⚠️ 风险").font(.headline)
+                    ForEach(Array(result.risks.enumerated()), id: \.offset) { index, item in
+                        HStack(alignment: .top, spacing: 8) {
+                            Text("\(index + 1).").fontWeight(.bold).foregroundColor(.orange)
+                            Text(item).font(.subheadline)
+                        }
+                    }
+                }
+            }
+
+            Divider()
+
+            // 底部水印
+            HStack {
+                Text("挠荔枝 · Knowledge")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                Spacer()
+                Text(Date().formatted(date: .abbreviated, time: .omitted))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+        }
+        .padding(24)
+        .frame(width: 360)
+        .background(Color(.systemBackground))
+    }
+
+    private func sectionLabel(_ title: String) -> some View {
+        Text(title)
+            .font(.subheadline)
+            .fontWeight(.semibold)
+            .foregroundColor(.orange)
+            .padding(.top, 4)
+    }
+}
+
+// MARK: - Share Sheet (UIKit Bridge)
+
+struct ShareSheet: UIViewControllerRepresentable {
+    let items: [Any]
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: items, applicationActivities: nil)
+    }
+
+    func updateUIViewController(_ vc: UIActivityViewController, context: Context) {}
 }
 
 // MARK: - 加载中状态
 
 struct SummaryLoadingView: View {
-    @State private var animationProgress: CGFloat = 0
-    private let timer = Timer.publish(every: 0.02, on: .main, in: .common).autoconnect()
-
     var body: some View {
         VStack(spacing: 24) {
-            // 动画图标
-            ZStack {
-                Circle()
-                    .stroke(Color.accentColor.opacity(0.15), lineWidth: 4)
-                    .frame(width: 80, height: 80)
+            // 荔枝思考中
+            LycheeMascotView(size: 64, state: .thinking, enableEasterEgg: false)
 
-                Circle()
-                    .trim(from: 0, to: animationProgress)
-                    .stroke(
-                        LinearGradient(
-                            colors: [.accentColor, .accentColor.opacity(0.5)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        style: StrokeStyle(lineWidth: 4, lineCap: .round)
-                    )
-                    .frame(width: 80, height: 80)
-                    .rotationEffect(.degrees(-90))
-
-                Image(systemName: "sparkles")
-                    .font(.title2)
-                    .foregroundColor(.accentColor)
-            }
-            .onReceive(timer) { _ in
-                withAnimation(.linear(duration: 0.02)) {
-                    animationProgress = (animationProgress + 0.008).truncatingRemainder(dividingBy: 1.0)
-                }
-            }
-
-            Text("正在生成摘要...")
+            Text("荔枝正在分析...")
                 .font(.headline)
                 .foregroundColor(.primary)
 
@@ -184,13 +520,18 @@ struct SummaryErrorView: View {
 #Preview {
     SummaryCardView(
         result: SummaryResult(
-            content: "本文主要讨论了人工智能在医疗领域的应用现状和未来趋势...",
+            oneLiner: "本文主要讨论了人工智能在医疗领域的应用现状和未来趋势。",
+            threeLines: "AI 技术正在深刻改变医疗行业的诊断和治疗方式。\n当前最大的挑战是数据隐私和算法偏见。\n预计未来 5 年内 AI 医疗市场规模将增长 3 倍。",
+            coreContent: "人工智能在医疗领域的应用已覆盖影像诊断、药物研发、健康管理等多个方面。其中，AI 辅助诊断的准确率已达到 95% 以上，成为最成熟的应用场景。",
             keyPoints: [
                 "AI 辅助诊断准确率已达 95% 以上",
                 "医疗影像分析是最成熟的应用场景",
                 "数据隐私和算法偏见仍是主要挑战"
-            ]
+            ],
+            actionItems: ["推动 AI 诊断在基层医院的试点", "建立数据隐私合规框架"],
+            risks: ["算法偏见可能导致误诊", "患者数据泄露风险"]
         ),
-        onReadAloud: {}
+        onReadAloud: { _ in },
+        onStopAloud: {}
     )
 }

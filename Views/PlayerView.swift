@@ -4,6 +4,7 @@ import SwiftUI
 struct PlayerView: View {
     @ObservedObject var speakerVM: SpeakerViewModel
     @ObservedObject var subscriptionManager = SubscriptionManager.shared
+    @ObservedObject var lycheeLevel = LycheeLevelManager.shared
     @State private var scrollProxy: ScrollViewProxy?
     @State private var showSummary = false
     @State private var showCompanion = false
@@ -14,6 +15,27 @@ struct PlayerView: View {
             VStack(spacing: 0) {
                 if let doc = speakerVM.currentDocument {
                     VStack(spacing: 16) {
+                        // Edge TTS 音色下线警告
+                        if let warning = speakerVM.edgeVoiceWarning {
+                            HStack(spacing: 8) {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .foregroundColor(.orange)
+                                Text(warning)
+                                    .font(.caption)
+                                    .foregroundColor(.orange)
+                                Spacer()
+                                Button("知道了") {
+                                    speakerVM.edgeVoiceWarning = nil
+                                }
+                                .font(.caption)
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .background(Color.orange.opacity(0.1))
+                            .cornerRadius(8)
+                            .padding(.horizontal, 16)
+                        }
+
                         // 文档信息头部
                         headerView(doc: doc)
                             .padding(.horizontal, 24)
@@ -79,9 +101,11 @@ struct PlayerView: View {
                 speakerVM.generateSummary()
             }
         } else if let result = speakerVM.summaryResult {
-            SummaryCardView(result: result) {
-                speakerVM.readSummaryAloud()
-            }
+            SummaryCardView(
+                result: result,
+                onReadAloud: { detailed in speakerVM.readSummaryAloud(detailed: detailed) },
+                onStopAloud: { speakerVM.stop() }
+            )
         } else {
             // 首次进入，触发生成
             Color.clear
@@ -105,6 +129,24 @@ struct PlayerView: View {
                     .font(.caption).foregroundColor(.secondary)
             }
             Spacer()
+
+            // 荔枝伴侣（根据播放状态变化 + 等级装饰）
+            LycheeMascotView(
+                size: 36,
+                state: mascotStateForPlayback,
+                level: lycheeLevel.currentLevel,
+                enableEasterEgg: true
+            )
+        }
+    }
+
+    /// 播放状态 → 荔枝动画状态
+    private var mascotStateForPlayback: MascotState {
+        switch speakerVM.state {
+        case .playing: return .listening
+        case .paused: return .idle
+        case .finished: return .happy
+        default: return .sleeping
         }
     }
 
@@ -290,14 +332,10 @@ struct PlayerView: View {
     private var emptyState: some View {
         VStack(spacing: 20) {
             Spacer()
-            ZStack {
-                Circle()
-                    .fill(Color.accentColor.opacity(0.1))
-                    .frame(width: 100, height: 100)
-                Image(systemName: "headphones")
-                    .font(.system(size: 40))
-                    .foregroundColor(.accentColor)
-            }
+
+            // 荔枝打瞌睡
+            LycheeMascotView(size: 80, state: .sleeping)
+
             VStack(spacing: 8) {
                 Text("暂无播放内容")
                     .font(.title3)

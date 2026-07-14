@@ -23,9 +23,10 @@ final class ServerAPIClient {
     // MARK: - AI Summary
 
     /// 请求 AI 总结
-    func requestSummary(text: String) async throws -> String {
+    func requestSummary(text: String, systemPrompt: String) async throws -> String {
         let body: [String: Any] = [
-            "text": String(text.prefix(8000))  // 服务端也可再做截断
+            "text": String(text.prefix(8000)),
+            "systemPrompt": systemPrompt
         ]
         return try await post(endpoint: "/summary", body: body, extractContent: true)
     }
@@ -33,11 +34,12 @@ final class ServerAPIClient {
     // MARK: - AI Companion
 
     /// 请求 AI 伴读对话
-    func requestCompanion(question: String, context: String, history: [[String: String]]) async throws -> String {
+    func requestCompanion(question: String, context: String, history: [[String: String]], systemPrompt: String) async throws -> String {
         let body: [String: Any] = [
             "question": question,
             "context": context,
-            "history": history
+            "history": history,
+            "systemPrompt": systemPrompt
         ]
         return try await post(endpoint: "/companion", body: body, extractContent: true)
     }

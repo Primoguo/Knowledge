@@ -7,10 +7,14 @@ struct CompanionView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var inputText = ""
     @FocusState private var inputFocused: Bool
+    @State private var dragOffset: CGFloat = 0
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
+                // 下拉指示器
+                pullHandle
+
                 // 消息列表
                 messagesList
 
@@ -23,8 +27,16 @@ struct CompanionView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("继续听") { dismiss() }
+                    // 播放/暂停切换按钮
+                    Button(action: togglePlayback) {
+                        HStack(spacing: 4) {
+                            Image(systemName: speakerVM.state == .playing ? "pause.fill" : "play.fill")
+                                .font(.system(size: 12))
+                            Text(speakerVM.state == .playing ? "暂停" : "播放")
+                                .font(.subheadline)
+                        }
                         .foregroundColor(.accentColor)
+                    }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
@@ -38,20 +50,61 @@ struct CompanionView: View {
                     }
                 }
             }
+            .offset(y: max(0, dragOffset))
+            .gesture(
+                DragGesture()
+                    .onChanged { value in
+                        if value.translation.height > 0 {
+                            dragOffset = value.translation.height
+                        }
+                    }
+                    .onEnded { value in
+                        if value.translation.height > 100 {
+                            dismiss()
+                        } else {
+                            withAnimation(.spring(response: 0.3)) {
+                                dragOffset = 0
+                            }
+                        }
+                    }
+            )
             .onAppear {
-                // 进入伴读时暂停朗读
-                if speakerVM.state == .playing {
-                    speakerVM.pause()
-                }
                 inputFocused = true
+                // 进入伴读时不自动暂停——支持边听边问
             }
             .onDisappear {
-                // 退出伴读时恢复朗读
-                if speakerVM.companionPausedPlay {
-                    speakerVM.play()
-                    speakerVM.companionPausedPlay = false
-                }
+                // 退出伴读时不再自动恢复，播放状态由用户控制
             }
+        }
+    }
+
+    // MARK: - Pull Handle
+
+    /// 下拉指示器：提示用户可以下拉回到播放页
+    private var pullHandle: some View {
+        VStack(spacing: 2) {
+            Capsule()
+                .fill(Color.secondary.opacity(0.3))
+                .frame(width: 36, height: 4)
+                .padding(.top, 4)
+            Text("↓ 下拉回到播放页")
+                .font(.caption2)
+                .foregroundColor(.secondary.opacity(0.5))
+        }
+        .frame(maxWidth: .infinity)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            dismiss()
+        }
+    }
+
+    // MARK: - Playback Toggle
+
+    private func togglePlayback() {
+        if speakerVM.state == .playing {
+            speakerVM.pause()
+        } else {
+            speakerVM.play()
         }
     }
 
@@ -86,11 +139,9 @@ struct CompanionView: View {
 
     private var welcomeMessage: some View {
         VStack(spacing: 8) {
-            Image(systemName: "sparkles.rectangle.stack.fill")
-                .font(.system(size: 32))
-                .foregroundColor(.accentColor)
+            LycheeMascotView(size: 60, state: .waving)
 
-            Text("AI 伴读助手")
+            Text("荔枝伴读助手")
                 .font(.headline)
 
             Text("你可以问我关于当前内容的任何问题\n朗读会自动暂停，回答完后可以继续")
@@ -125,11 +176,18 @@ struct CompanionView: View {
         HStack(alignment: .top, spacing: 8) {
             if msg.isUser {
                 Spacer(minLength: 40)
+            } else {
+                // 荔枝头像（AI 消息）
+                LycheeMascotView(
+                    size: 28,
+                    state: msg.isLoading ? .thinking : .idle,
+                    enableEasterEgg: false
+                )
             }
 
             VStack(alignment: msg.isUser ? .trailing : .leading, spacing: 4) {
                 // 角色标签
-                Text(msg.isUser ? "你" : "AI 伴读")
+                Text(msg.isUser ? "你" : "荔枝")
                     .font(.caption2)
                     .foregroundColor(.secondary)
 
@@ -137,9 +195,7 @@ struct CompanionView: View {
                 Group {
                     if msg.isLoading {
                         HStack(spacing: 4) {
-                            ProgressView()
-                                .scaleEffect(0.8)
-                            Text("思考中...")
+                            Text("荔枝思考中...")
                                 .foregroundColor(.secondary)
                         }
                     } else {

@@ -66,13 +66,11 @@ enum LanguageDetector {
 
         ErrorHandler.shared.log("自动切换语音: \(targetLang) → \(bestVoice?.name ?? "默认")", level: .info)
 
-        return VoiceConfig(
-            rate: currentConfig.rate,
-            pitchMultiplier: currentConfig.pitchMultiplier,
-            volume: currentConfig.volume,
-            language: targetLang,
-            voiceIdentifier: bestVoice?.identifier
-        )
+        // 保留用户的引擎和音色选择，只更新语言和系统音色
+        var newConfig = currentConfig
+        newConfig.language = targetLang
+        newConfig.voiceIdentifier = bestVoice?.identifier
+        return newConfig
     }
 
     private static func languageMatches(_ detected: String, _ configLang: String) -> Bool {

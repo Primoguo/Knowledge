@@ -100,6 +100,12 @@ final class SpeechService: NSObject, SpeechSynthesizerProtocol, AVSpeechSynthesi
         updateState(.idle)
     }
 
+    func updateRate(_ rate: Float) {
+        config.rate = rate
+        // AVSpeechSynthesizer 无法动态修改正在播放的 utterance 语速
+        // 新的 rate 会在下一个 chunk 或 resume 时生效
+    }
+
     func skipForward(by seconds: TimeInterval = 30) {
         let charsToSkip = Int(seconds) * Self.charsPerSecond
         let nsText = fullText as NSString

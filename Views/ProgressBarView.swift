@@ -40,15 +40,17 @@ struct ProgressBarView: View {
                         .offset(x: x - 0.5, y: -2)
                 }
 
-                // 拖拽滑块
-                Circle()
-                    .fill(Color.accentColor)
-                    .frame(width: isDragging ? 16 : 12, height: isDragging ? 16 : 12)
-                    .shadow(color: .accentColor.opacity(0.3), radius: 4, y: 1)
-                    .offset(x: max(0, width * displayProgress - (isDragging ? 8 : 6)))
+                // 拖拽滑块 — 小荔枝
+                Image("LycheeMascot")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: isDragging ? 28 : 22, height: isDragging ? 28 : 22)
+                    .shadow(color: .black.opacity(0.15), radius: 3, y: 1)
+                    .scaleEffect(isDragging ? 1.1 : 1.0)
+                    .offset(x: max(0, width * displayProgress - (isDragging ? 14 : 11)))
                     .animation(.spring(response: 0.2, dampingFraction: 0.7), value: isDragging)
             }
-            .frame(height: 20)
+            .frame(height: 30)
             .contentShape(Rectangle())
             .gesture(
                 DragGesture(minimumDistance: 0)
@@ -72,7 +74,7 @@ struct ProgressBarView: View {
                     }
             )
         }
-        .frame(height: 20)
+        .frame(height: 30)
     }
 
     // MARK: - Paragraph Boundary Detection

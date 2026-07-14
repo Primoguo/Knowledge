@@ -23,11 +23,17 @@ final class EdgeTTSSynthesizer: NSObject, SpeechSynthesizerProtocol {
     private var currentConfig: VoiceConfig = .defaultConfig
     private var synthesisTask: Task<Void, Never>?
 
-    /// 预加载缓存（下一段音频数据，避免段落间卡顿）
-    private var prefetchedData: (index: Int, data: Data)?
+    /// 预加载缓存（下一段音频数据 + 合成语速，避免段落间卡顿）
+    private var prefetchedData: (index: Int, data: Data, rate: Float)?
 
     /// 段落播放完成的 continuation（实现 Task 等待播放结束）
     private var playbackContinuation: CheckedContinuation<Void, Never>?
+
+    /// 当前段落合成时使用的语速（用于 rate 补偿）
+    private var currentSegmentSynthesisRate: Float = 1.0
+
+    /// 段落内偏移（seek 时非零，表示从段落中间开始）
+    private var seekOffsetInSegment: Int = 0
 
     // MARK: - SpeechSynthesizerProtocol
 
@@ -43,10 +49,12 @@ final class EdgeTTSSynthesizer: NSObject, SpeechSynthesizerProtocol {
         segmentStartPositions = calculateSegmentPositions(text: text, segments: segments)
 
         // 从 position 开始，跳到对应段落
+        seekOffsetInSegment = 0
         if position > 0 {
             for (i, start) in segmentStartPositions.enumerated() {
                 if start <= position && (i == segmentStartPositions.count - 1 || segmentStartPositions[i + 1] > position) {
                     currentSegmentIndex = i
+                    seekOffsetInSegment = position - start
                     break
                 }
             }
@@ -69,6 +77,8 @@ final class EdgeTTSSynthesizer: NSObject, SpeechSynthesizerProtocol {
     func stop() {
         synthesisTask?.cancel()
         prefetchTask?.cancel()
+        positionTimer?.invalidate()
+        positionTimer = nil
         audioPlayer?.stop()
         audioPlayer = nil
         playbackContinuation?.resume()
@@ -167,11 +177,14 @@ final class EdgeTTSSynthesizer: NSObject, SpeechSynthesizerProtocol {
                     if let prefetch = self.prefetchedData, prefetch.index == index {
                         audioData = prefetch.data
                         self.prefetchedData = nil
+                        self.currentSegmentSynthesisRate = prefetch.rate
                     } else {
                         self.prefetchedData = nil
+                        let synthRate = self.currentConfig.rate
                         audioData = try await self.service.synthesize(
-                            text: segment, voice: voice, rate: self.currentConfig.rate
+                            text: segment, voice: voice, rate: synthRate
                         )
+                        self.currentSegmentSynthesisRate = synthRate
                     }
 
                     guard !Task.isCancelled, self.state == .playing else { break }
@@ -198,7 +211,7 @@ final class EdgeTTSSynthesizer: NSObject, SpeechSynthesizerProtocol {
                                 text: nextSegment, voice: voice, rate: rate
                             ) {
                                 await MainActor.run {
-                                    self?.prefetchedData = (index: index + 1, data: nextData)
+                                    self?.prefetchedData = (index: index + 1, data: nextData, rate: rate)
                                 }
                             }
                         }
@@ -229,32 +242,61 @@ final class EdgeTTSSynthesizer: NSObject, SpeechSynthesizerProtocol {
         do {
             audioPlayer = try AVAudioPlayer(contentsOf: url)
             audioPlayer?.delegate = self
+            audioPlayer?.enableRate = true
             audioPlayer?.play()
+
+            // 应用语速补偿：合成语速 vs 当前期望语速
+            applyRateCompensation()
 
             let basePosition = segmentStartPositions[min(segmentIndex, segmentStartPositions.count - 1)]
             let segmentLen = segmentIndex < segments.count
                 ? (segments[segmentIndex] as NSString).length
                 : 0
 
-            onPositionChange?(basePosition)
-            onRangeChange?(NSRange(location: basePosition, length: segmentLen))
+            // seek 偏移：第一段用 seekOffsetInSegment，后续段落从 0 开始
+            let offset = (segmentIndex == self.currentSegmentIndex) ? self.seekOffsetInSegment : 0
+
+            // 如果 seek 到段落中间，估算音频跳转位置
+            if offset > 0, segmentLen > 0, let player = audioPlayer, player.duration > 0 {
+                let skipFraction = Double(offset) / Double(segmentLen)
+                player.currentTime = player.duration * skipFraction
+            }
+
+            onPositionChange?(basePosition + offset)
+            onRangeChange?(NSRange(location: basePosition + offset, length: segmentLen - offset))
 
             // 段落内高亮跟随：每 0.5 秒按比例更新当前位置
-            startPositionUpdateTimer(basePosition: basePosition, segmentLength: segmentLen)
+            startPositionUpdateTimer(basePosition: basePosition, segmentLength: segmentLen, seekOffset: offset)
         } catch {
             onError?(error)
         }
     }
 
+    // MARK: - Rate Control
+
+    /// 更新语速（不重启播放，立即通过 AVAudioPlayer.rate 生效）
+    func updateRate(_ rate: Float) {
+        currentConfig.rate = rate
+        applyRateCompensation()
+    }
+
+    /// 计算并应用 AVAudioPlayer 播放速率补偿
+    private func applyRateCompensation() {
+        guard let player = audioPlayer, currentSegmentSynthesisRate > 0 else { return }
+        let compensation = currentConfig.rate / currentSegmentSynthesisRate
+        // 限制在 AVAudioPlayer 支持的范围内
+        player.rate = max(0.5, min(2.0, compensation))
+    }
+
     private var positionTimer: Timer?
 
     /// 段落内定时更新高亮位置（按播放时间比例估算字符位置）
-    private func startPositionUpdateTimer(basePosition: Int, segmentLength: Int) {
+    private func startPositionUpdateTimer(basePosition: Int, segmentLength: Int, seekOffset: Int = 0) {
         positionTimer?.invalidate()
         positionTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
             guard let self, let player = self.audioPlayer, segmentLength > 0 else { return }
             let progress = player.duration > 0 ? player.currentTime / player.duration : 0
-            let charOffset = Int(Double(segmentLength) * progress)
+            let charOffset = seekOffset + Int(Double(segmentLength - seekOffset) * progress)
             let absPos = basePosition + charOffset
             self.onPositionChange?(absPos)
             self.onRangeChange?(NSRange(location: absPos, length: max(0, segmentLength - charOffset)))

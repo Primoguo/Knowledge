@@ -12,7 +12,9 @@ final class SubscriptionManager: ObservableObject {
     // MARK: - Published State
 
     /// 用户是否已订阅 Premium
-    @Published var isPremium: Bool = false
+    /// ⚠️ 临时测试模式：设为 true 跳过付费墙，上线前必须改回 false
+    static let testMode = true  // ← 测试完毕改回 false
+    @Published var isPremium: Bool = testMode
 
     /// 是否正在加载/检查订阅状态
     @Published var isLoading: Bool = false
@@ -55,6 +57,11 @@ final class SubscriptionManager: ObservableObject {
 
     /// 检查当前订阅状态
     func checkSubscriptionStatus() async {
+        // 测试模式：跳过真实订阅检查
+        if Self.testMode {
+            isPremium = true
+            return
+        }
         // 检查所有订阅类型的 entitlements
         for await result in Transaction.currentEntitlements {
             if case .verified(let transaction) = result {

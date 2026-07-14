@@ -34,6 +34,9 @@ final class SpeakerViewModel: ObservableObject {
     @Published var isGeneratingSummary = false
     @Published var summaryError: String?
 
+    /// Edge TTS 音色下线警告（非 nil 时显示提示）
+    @Published var edgeVoiceWarning: String?
+
     // MARK: - AI 伴读（默认隐藏，开启时将 enableCompanion 改为 true）
 
     /// ⚠️ 功能开关：改为 true 即可启用 AI 伴读入口
@@ -50,6 +53,8 @@ final class SpeakerViewModel: ObservableObject {
     private var currentPosition = 0
     /// 高亮更新防抖计时器（避免频繁 UI 刷新）
     private var highlightDebounceTimer: Timer?
+    /// 状态轮询定时器（单独管理，避免 setupBindings 重复创建）
+    private var statePollingCancellable: AnyCancellable?
 
     // MARK: - Init
 
@@ -97,6 +102,37 @@ final class SpeakerViewModel: ObservableObject {
         }
     }
 
+    /// 轻量级引擎切换：仅切换合成器指针，不重启播放、不保存配置
+    /// 用于 loadDocument 时恢复上次选择的引擎
+    private func applyEngine(from config: VoiceConfig) {
+        switch config.engine {
+        case .system, .legacySystem:
+            synthesizer = systemSynthesizer
+        case .edgeTTS:
+            synthesizer = edgeTTSSynthesizer
+        case .knowledgeVoice:
+            synthesizer = cosyVoiceSynthesizer
+        }
+        setupBindings()
+    }
+
+    /// 检查保存的 Edge TTS 音色是否仍在线，已下线则自动回退到默认
+    private func checkEdgeVoiceAvailability() {
+        edgeVoiceWarning = nil
+        guard voiceConfig.engine == .edgeTTS, let voiceId = voiceConfig.edgeVoiceId else { return }
+
+        Task {
+            let available = await EdgeTTSService.shared.isVoiceAvailable(voiceId)
+            if !available {
+                let oldName = voiceId
+                voiceConfig.edgeVoiceId = "zh-CN-XiaoxiaoNeural"
+                saveConfig(voiceConfig)
+                edgeVoiceWarning = "\(oldName) 已下线，已自动切换到“晓晓”"
+                print("⚠️ Edge TTS 音色 \(oldName) 已下线，回退到晓晓")
+            }
+        }
+    }
+
     // MARK: - Document Loading
 
     func loadDocument(_ document: Document) {
@@ -119,6 +155,12 @@ final class SpeakerViewModel: ObservableObject {
             }
         }
 
+        // 根据加载的配置切换合成器（保持上次选择的引擎）
+        applyEngine(from: voiceConfig)
+
+        // 检查 Edge TTS 音色是否仍可用
+        checkEdgeVoiceAvailability()
+
         progress = document.progress
         currentPosition = document.currentPosition
         updatePositionText()
@@ -128,9 +170,8 @@ final class SpeakerViewModel: ObservableObject {
 
     func togglePlayPause() {
         switch state {
-        case .idle, .paused: play()
+        case .idle, .paused, .finished: play()
         case .playing: pause()
-        case .finished: replay()
         }
     }
 
@@ -140,7 +181,16 @@ final class SpeakerViewModel: ObservableObject {
         if state == .paused {
             synthesizer.resume()
         } else {
-            synthesizer.speak(text: doc.extractedText, from: doc.currentPosition, config: voiceConfig)
+            // 播放结束后自动从头开始
+            if state == .finished {
+                currentPosition = 0
+                doc.currentPosition = 0
+                progress = 0
+                updatePositionText()
+            }
+            // 使用 self.currentPosition（seek 后立即更新，比 doc.currentPosition 更可靠）
+            let startPos = currentPosition > 0 ? currentPosition : doc.currentPosition
+            synthesizer.speak(text: doc.extractedText, from: startPos, config: voiceConfig)
         }
         updateNowPlaying()
     }
@@ -159,6 +209,7 @@ final class SpeakerViewModel: ObservableObject {
 
     func replay() {
         guard let doc = currentDocument else { return }
+        // 只有真正的从头播放按钮才重置位置
         doc.currentPosition = 0
         currentPosition = 0
         savePosition()
@@ -171,15 +222,15 @@ final class SpeakerViewModel: ObservableObject {
     func seekTo(progress: Double) {
         guard let doc = currentDocument else { return }
         let target = Int(Double(doc.totalLength) * progress)
+        let wasActive = (state == .playing || state == .paused)
+        print("🎯 seekTo: progress=\(String(format: "%.2f", progress)), target=\(target), wasActive=\(wasActive), state=\(state), engine=\(voiceConfig.engine.displayName)")
+        // 先更新位置，再 stop/speak，避免旧回调覆盖新位置
+        currentPosition = target
+        updateProgress(target)
         synthesizer.stop()
-        if state == .playing || state == .paused {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
-                guard let self else { return }
-                self.synthesizer.speak(text: doc.extractedText, from: target, config: self.voiceConfig)
-            }
+        if wasActive {
+            self.synthesizer.speak(text: doc.extractedText, from: target, config: self.voiceConfig)
         } else {
-            currentPosition = target
-            updateProgress(target)
             savePosition()
         }
     }
@@ -187,9 +238,22 @@ final class SpeakerViewModel: ObservableObject {
     // MARK: - Config
 
     func updateConfig(_ config: VoiceConfig) {
+        let oldConfig = voiceConfig
         voiceConfig = config
         saveConfig(config)
-        guard state == .playing, let doc = currentDocument else { return }
+
+        guard state == .playing else { return }
+
+        // 如果只有语速变了，直接改播放速率，不重启
+        var rateOnlyCheck = oldConfig
+        rateOnlyCheck.rate = config.rate
+        if rateOnlyCheck == config {
+            synthesizer.updateRate(config.rate)
+            return
+        }
+
+        // 其他配置变化需要重启
+        guard let doc = currentDocument else { return }
         let pos = currentPosition
         synthesizer.stop()
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
@@ -232,9 +296,9 @@ final class SpeakerViewModel: ObservableObject {
     }
 
     /// 朗读 AI 摘要
-    func readSummaryAloud() {
+    func readSummaryAloud(detailed: Bool = false) {
         guard let result = summaryResult else { return }
-        let summaryText = result.content + "\n\n" + result.keyPoints.joined(separator: "\n")
+        let summaryText = result.readAloudText(detailed: detailed)
         synthesizer.stop()
         synthesizer.speak(text: summaryText, from: 0, config: voiceConfig)
     }
@@ -254,7 +318,11 @@ final class SpeakerViewModel: ObservableObject {
         let context = extractCompanionContext()
 
         do {
-            let response = try await CompanionService.shared.ask(question: question, context: context)
+            let response = try await CompanionService.shared.ask(
+                question: question,
+                context: context,
+                documentId: currentDocument?.id.uuidString
+            )
             await MainActor.run {
                 // 移除 loading 占位，添加真实回复
                 companionMessages.removeAll { $0.isLoading }
@@ -323,19 +391,23 @@ final class SpeakerViewModel: ObservableObject {
             Task { @MainActor in
                 guard let self else { return }
                 print("🔊 TTS 引擎错误: \(error.localizedDescription)")
-                // 云端引擎出错时降级到系统 TTS
+                // 云端引擎出错时临时降级到系统 TTS（不保存配置，下次打开仍用用户选择的引擎）
                 if self.voiceConfig.engine == .knowledgeVoice || self.voiceConfig.engine == .edgeTTS {
-                    print("️ 降级到 Apple Neural TTS")
-                    self.voiceConfig.engine = .system
+                    print("⚠️ 临时降级到 Apple Neural TTS（用户引擎选择已保留）")
                     self.synthesizer = self.systemSynthesizer
                     self.setupBindings()
-                    self.saveConfig(self.voiceConfig)
+                    // 用系统 TTS 重新播放当前位置
+                    if let doc = self.currentDocument, self.state == .playing {
+                        let pos = self.currentPosition
+                        self.synthesizer.speak(text: doc.extractedText, from: pos, config: self.voiceConfig)
+                    }
                 }
             }
         }
 
-        // 监听状态变化（通过 Combine）
-        Timer.publish(every: 0.1, on: .main, in: .common)
+        // 监听状态变化（取消旧的，只保留一个定时器）
+        statePollingCancellable?.cancel()
+        statePollingCancellable = Timer.publish(every: 0.1, on: .main, in: .common)
             .autoconnect()
             .sink { [weak self] _ in
                 guard let self else { return }
@@ -343,9 +415,15 @@ final class SpeakerViewModel: ObservableObject {
                 if self.state != newState {
                     self.state = newState
                     if newState == .finished || newState == .idle { self.savePosition() }
+
+                    // 荔枝成长体系：播放时追踪收听时间
+                    if newState == .playing {
+                        LycheeLevelManager.shared.startTracking()
+                    } else {
+                        LycheeLevelManager.shared.stopTracking()
+                    }
                 }
             }
-            .store(in: &cancellables)
 
         // 远程控制
         nowPlaying.onPlayPause = { [weak self] in Task { @MainActor in self?.togglePlayPause() } }
@@ -387,15 +465,20 @@ final class SpeakerViewModel: ObservableObject {
         doc.lastOpenedDate = Date()
     }
 
-    private func loadConfig() -> VoiceConfig {
-        guard let data = UserDefaults.standard.data(forKey: "voiceConfig"),
-              let c = try? JSONDecoder().decode(VoiceConfig.self, from: data) else { return .defaultConfig }
-        return c
-    }
-
     private func saveConfig(_ config: VoiceConfig) {
         if let data = try? JSONEncoder().encode(config) {
             UserDefaults.standard.set(data, forKey: "voiceConfig")
+            print("💾 保存配置: engine=\(config.engine.displayName), voice=\(config.edgeVoiceId ?? config.voiceIdentifier ?? "nil")")
         }
+    }
+
+    private func loadConfig() -> VoiceConfig {
+        guard let data = UserDefaults.standard.data(forKey: "voiceConfig"),
+              let c = try? JSONDecoder().decode(VoiceConfig.self, from: data) else {
+            print("📂 加载配置: 无缓存，使用默认")
+            return .defaultConfig
+        }
+        print("📂 加载配置: engine=\(c.engine.displayName), voice=\(c.edgeVoiceId ?? c.voiceIdentifier ?? "nil")")
+        return c
     }
 }

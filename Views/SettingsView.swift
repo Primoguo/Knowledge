@@ -18,6 +18,14 @@ struct SettingsView: View {
     @State private var showSystemVoiceSelect = false
     @State private var showEdgeVoiceSelect = false
 
+    @State private var companionDifficulty: String = "intermediate"
+
+    private let difficultyOptions = [
+        ("beginner", "入门", "生活类比，避免术语"),
+        ("intermediate", "进阶", "可用术语，适度抽象"),
+        ("advanced", "专业", "专业表达，逻辑密度高")
+    ]
+
     private let langs = [("zh-CN", "中文（普通话）"), ("zh-HK", "中文（粤语）"), ("en-US", "English (US)"), ("en-GB", "English (UK)"), ("ja-JP", "日本語"), ("ko-KR", "한국어")]
 
     var body: some View {
@@ -270,6 +278,36 @@ struct SettingsView: View {
                         }
                     }
                 }
+                // MARK: - AI 伴读设置
+                Section {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("回答风格")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+
+                        Picker("回答风格", selection: $companionDifficulty) {
+                            Text("入门").tag("beginner")
+                            Text("进阶").tag("intermediate")
+                            Text("专业").tag("advanced")
+                        }
+                        .pickerStyle(.segmented)
+                        .onChange(of: companionDifficulty) {
+                            CompanionService.shared.difficulty = companionDifficulty
+                        }
+
+                        // 当前风格说明
+                        let desc = difficultyOptions.first { $0.0 == companionDifficulty }?.2 ?? ""
+                        Text(desc)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(.vertical, 4)
+                } header: {
+                    Text("AI 伴读")
+                } footer: {
+                    Text("AI 会根据你的选择调整回答的深度和风格")
+                }
+
                 Section("关于") {
                     HStack { Text("版本"); Spacer(); Text("2.0.0").foregroundColor(.secondary) }
                 }
@@ -280,6 +318,7 @@ struct SettingsView: View {
                 rate = Double(c.rate); pitch = Double(c.pitchMultiplier); volume = Double(c.volume)
                 selectedLang = c.language; selectedVoice = c.voiceIdentifier
                 selectedEngine = c.engine
+                companionDifficulty = CompanionService.shared.difficulty
                 updateVoices()
             }
             .sheet(isPresented: $showPaywall) {

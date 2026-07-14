@@ -16,4 +16,7 @@ protocol SpeechSynthesizerProtocol: AnyObject {
     func stop()
     func skipForward(by seconds: TimeInterval)
     func skipBackward(by seconds: TimeInterval)
+
+    /// 更新朗读语速（不重启播放，立即生效）
+    func updateRate(_ rate: Float)
 }
