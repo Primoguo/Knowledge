@@ -70,7 +70,7 @@ struct VnoteDetailView: View {
             }
             .foregroundColor(.secondary)
 
-            Text(entry.createdAt, style: .relative)
+            Text(entry.createdAt, format: .dateTime.month(.abbreviated).day().hour().minute())
                 .font(.caption)
                 .foregroundColor(.secondary.opacity(0.6))
         }
