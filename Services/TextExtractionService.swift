@@ -241,8 +241,11 @@ final class TextExtractionService {
         return nil
     }
 
-    /// 清洗提取后的文本：去除导航残留、短噪音行、多余空行
+    /// 清洗提取后的文本：去除导航残留、短噪音行、多余空行、HTML 残留
     private func cleanExtractedText(_ text: String) -> String {
+        // 先清理残留 HTML 标签和属性碎片
+        var text = stripHTMLResidue(text)
+
         var lines = text.components(separatedBy: "\n")
 
         // 过滤规则
@@ -255,6 +258,8 @@ final class TextExtractionService {
             "上一篇", "下一篇", "返回首页", "回到顶部",
             "评论", "点赞", "收藏", "转发",
             "©", "Copyright", "All Rights Reserved",
+            "browsehappy", "ReadPolicy", "Cookies",
+            "e-module-", "compatibility", "browser-hint",
         ]
 
         lines = lines.filter { line in
@@ -282,6 +287,48 @@ final class TextExtractionService {
         let cleaned = lines.joined(separator: "\n")
         let result = cleaned.replacingOccurrences(of: "\n{3,}", with: "\n\n", options: .regularExpression)
         return result.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    /// 清理文本中残留的 HTML 标签碎片和属性泄漏
+    private func stripHTMLResidue(_ text: String) -> String {
+        var result = text
+
+        // 1. 去除完整 HTML 标签（包括带属性的）
+        result = result.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
+
+        // 2. 去除 class="..." / id="..." / data-*="..." 等属性碎片（标签未闭合时泄漏）
+        result = result.replacingOccurrences(
+            of: #"(?:class|id|data-[a-z-]+|style|role|aria-[a-z-]+)\s*=\s*"[^"]*""#,
+            with: "", options: [.regularExpression, .caseInsensitive])
+
+        // 3. 去除 class='...' / id='...' 单引号版本
+        result = result.replacingOccurrences(
+            of: #"(?:class|id|data-[a-z-]+|style|role|aria-[a-z-]+)\s*=\s*'[^']*'"#,
+            with: "", options: [.regularExpression, .caseInsensitive])
+
+        // 4. 去除残留的 HTML 实体
+        let entities: [(String, String)] = [
+            ("&nbsp;", " "), ("&amp;", "&"), ("&lt;", "<"), ("&gt;", ">"),
+            ("&quot;", "\""), ("&#39;", "'"), ("&hellip;", "…"),
+            ("&mdash;", "—"), ("&ndash;", "–"), ("&copy;", "©"),
+            ("&ldquo;", "\u{201C}"), ("&rdquo;", "\u{201D}"),
+            ("&lsquo;", "\u{2018}"), ("&rsquo;", "\u{2019}"),
+            ("&#x27;", "'"), ("&apos;", "'"),
+        ]
+        for (entity, replacement) in entities {
+            result = result.replacingOccurrences(of: entity, with: replacement)
+        }
+        // 数字实体 &#123; &#x7B;
+        result = result.replacingOccurrences(of: "&#x[0-9a-fA-F]+;", with: "", options: .regularExpression)
+        result = result.replacingOccurrences(of: "&#\\d+;", with: "", options: .regularExpression)
+
+        // 5. 去除不完整的标签碎片（如孤立的 </div 或 <div）
+        result = result.replacingOccurrences(of: "</?\\w+\\s*", with: "", options: .regularExpression)
+
+        // 6. 清理多余空白
+        result = result.replacingOccurrences(of: "[ \\t]{2,}", with: " ", options: .regularExpression)
+
+        return result
     }
 
     /// 手动去除 HTML 标签
