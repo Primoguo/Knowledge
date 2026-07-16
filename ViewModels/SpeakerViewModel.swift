@@ -38,11 +38,6 @@ final class SpeakerViewModel: ObservableObject {
     /// Edge TTS 音色下线警告（非 nil 时显示提示）
     @Published var edgeVoiceWarning: String?
 
-    // MARK: - AI 伴读（默认隐藏，开启时将 enableCompanion 改为 true）
-
-    /// ⚠️ 功能开关：改为 true 即可启用 AI 伴读入口
-    let enableCompanion = false
-
     @Published var companionMessages: [CompanionMessage] = []
     @Published var isAskingCompanion = false
     /// 标记伴读进入时是否暂停了朗读，退出时自动恢复
