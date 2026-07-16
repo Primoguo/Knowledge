@@ -4,6 +4,7 @@ import Combine
 
 /// 录音服务 — AVAudioRecorder 封装
 /// 录制 16kHz 单声道 WAV，供 STT 识别
+@MainActor
 final class AudioRecorderService: NSObject, ObservableObject {
     @Published var isRecording = false
     @Published var duration: TimeInterval = 0       // 已录制时长（秒）
@@ -59,7 +60,10 @@ final class AudioRecorderService: NSObject, ObservableObject {
         recorder = try AVAudioRecorder(url: fileURL, settings: settings)
         recorder?.isMeteringEnabled = true
         recorder?.delegate = self
-        recorder?.record()
+        let didStart = recorder?.record() ?? false
+        if !didStart {
+            print("[Recorder] WARNING: recorder.record() returned false")
+        }
 
         isRecording = true
         startTime = Date()
@@ -67,19 +71,21 @@ final class AudioRecorderService: NSObject, ObservableObject {
 
         // 定时器：更新时长 + 音量（必须在主线程 RunLoop 中调度）
         let t = Timer(timeInterval: 0.05, repeats: true) { [weak self] _ in
-            guard let self = self, let recorder = self.recorder, recorder.isRecording else { return }
+            guard let self = self, self.isRecording else { return }
             if let start = self.startTime {
                 self.duration = Date().timeIntervalSince(start)
             }
-            recorder.updateMeters()
-            let power = recorder.averagePower(forChannel: 0)
-            // 将 dB (-160~0) 映射到 0~1
-            self.meterLevel = max(0, min(1, (power + 50) / 50))
+            if let recorder = self.recorder {
+                recorder.updateMeters()
+                let power = recorder.averagePower(forChannel: 0)
+                // 将 dB (-160~0) 映射到 0~1
+                self.meterLevel = max(0, min(1, (power + 50) / 50))
+            }
         }
         RunLoop.main.add(t, forMode: .common)
         timer = t
 
-        print("[Recorder] Started: \(fileName)")
+        print("[Recorder] Started: \(fileName), recorder.isRecording=\(recorder?.isRecording ?? false)")
     }
 
     // MARK: - 停止录音
@@ -116,13 +122,13 @@ final class AudioRecorderService: NSObject, ObservableObject {
 // MARK: - AVAudioRecorderDelegate
 
 extension AudioRecorderService: AVAudioRecorderDelegate {
-    func audioRecorderDidFinishRecording(_ recorder: AVAudioRecorder, successfully flag: Bool) {
+    nonisolated func audioRecorderDidFinishRecording(_ recorder: AVAudioRecorder, successfully flag: Bool) {
         if !flag {
             print("[Recorder] Recording finished unsuccessfully")
         }
     }
 
-    func audioRecorderEncodeErrorDidOccur(_ recorder: AVAudioRecorder, error: Error?) {
+    nonisolated func audioRecorderEncodeErrorDidOccur(_ recorder: AVAudioRecorder, error: Error?) {
         print("[Recorder] Encode error: \(error?.localizedDescription ?? "unknown")")
     }
 }
