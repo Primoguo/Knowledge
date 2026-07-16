@@ -65,8 +65,8 @@ final class AudioRecorderService: NSObject, ObservableObject {
         startTime = Date()
         duration = 0
 
-        // 定时器：更新时长 + 音量
-        timer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] _ in
+        // 定时器：更新时长 + 音量（必须在主线程 RunLoop 中调度）
+        let t = Timer(timeInterval: 0.05, repeats: true) { [weak self] _ in
             guard let self = self, let recorder = self.recorder, recorder.isRecording else { return }
             if let start = self.startTime {
                 self.duration = Date().timeIntervalSince(start)
@@ -76,6 +76,8 @@ final class AudioRecorderService: NSObject, ObservableObject {
             // 将 dB (-160~0) 映射到 0~1
             self.meterLevel = max(0, min(1, (power + 50) / 50))
         }
+        RunLoop.main.add(t, forMode: .common)
+        timer = t
 
         print("[Recorder] Started: \(fileName)")
     }

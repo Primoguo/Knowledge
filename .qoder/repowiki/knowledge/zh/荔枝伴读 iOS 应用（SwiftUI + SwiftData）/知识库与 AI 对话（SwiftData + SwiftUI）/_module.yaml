@@ -1,6 +1,6 @@
 schema_version: 1
 module_path: knowledge
-title: 知识库与 AI 对话模块
+title: 知识库与 AI 对话（SwiftData + SwiftUI）
 scope:
     - Models/KnowledgeEntry.swift
     - Models/KnowledgeChat.swift

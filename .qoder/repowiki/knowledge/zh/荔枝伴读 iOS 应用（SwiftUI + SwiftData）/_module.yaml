@@ -1,6 +1,6 @@
 schema_version: 1
 module_path: ""
-title: Lychee 荔枝伴读 iOS 应用
+title: 荔枝伴读 iOS 应用（SwiftUI + SwiftData）
 scope: []
 source_files: []
 depends_on: []
