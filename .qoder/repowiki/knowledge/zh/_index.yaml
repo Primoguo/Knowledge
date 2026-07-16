@@ -3,12 +3,28 @@ schema_version: 1
 locale: zh-CN
 branch: main
 nodes_managed: true
-exported_at: "2026-07-16T10:12:34Z"
+exported_at: "2026-07-16T15:32:41Z"
 modules:
     "":
-        dir_name: Knowledge iOS 应用（SwiftUI + SwiftData 阅读_听书）
-        title: Knowledge iOS 应用（SwiftUI + SwiftData 阅读/听书）
+        dir_name: Lychee 荔枝伴读 iOS 应用
+        title: Lychee 荔枝伴读 iOS 应用
         scope: []
+        source_files: []
+        children:
+            - knowledge
+        depends_on: []
+        related_to: []
+    knowledge:
+        dir_name: 知识库与 AI 对话模块
+        title: 知识库与 AI 对话模块
+        scope:
+            - Models/KnowledgeEntry.swift
+            - Models/KnowledgeChat.swift
+            - Services/KnowledgeService.swift
+            - Views/KnowledgeListView.swift
+            - Views/KnowledgeDetailView.swift
+            - App/KnowledgeApp.swift
+            - Views/ContentView.swift
         source_files: []
         children: []
         depends_on: []

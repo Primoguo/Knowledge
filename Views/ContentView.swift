@@ -17,6 +17,8 @@ struct ContentView: View {
         TabView {
             DocumentListView(speakerVM: speakerVM)
                 .tabItem { Label("书库", systemImage: "books.vertical.fill") }
+            VnoteListView()
+                .tabItem { Label("Vnote", systemImage: "mic.fill") }
             PlayerView(speakerVM: speakerVM)
                 .tabItem { Label("正在播放", systemImage: "headphones") }
             KnowledgeListView()

@@ -1,0 +1,14 @@
+schema_version: 1
+module_path: knowledge
+title: 知识库与 AI 对话模块
+scope:
+    - Models/KnowledgeEntry.swift
+    - Models/KnowledgeChat.swift
+    - Services/KnowledgeService.swift
+    - Views/KnowledgeListView.swift
+    - Views/KnowledgeDetailView.swift
+    - App/KnowledgeApp.swift
+    - Views/ContentView.swift
+source_files: []
+depends_on: []
+related_to: []
