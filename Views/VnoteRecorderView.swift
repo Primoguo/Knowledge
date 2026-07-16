@@ -7,6 +7,7 @@ struct VnoteRecorderView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @StateObject private var recorder = AudioRecorderService()
+    @ObservedObject private var subscriptionManager = SubscriptionManager.shared
     @State private var phase: RecorderPhase = .idle
     @State private var errorMessage: String?
     @State private var showPremiumPaywall = false
@@ -63,6 +64,9 @@ struct VnoteRecorderView: View {
                 Button("确定") { errorMessage = nil }
             } message: {
                 Text(errorMessage ?? "")
+            }
+            .sheet(isPresented: $showPremiumPaywall) {
+                PaywallView()
             }
         }
     }
@@ -198,21 +202,7 @@ struct VnoteRecorderView: View {
                 }
 
                 // 沉淀到知识库按钮
-                if !entry.isSyncedToKnowledge {
-                    Button {
-                        saveToKnowledge(entry)
-                    } label: {
-                        HStack {
-                            Image(systemName: "brain.head.profile")
-                            Text("沉淀到知识库")
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
-                        .foregroundColor(.white)
-                        .background(Capsule().fill(Color.primary))
-                    }
-                    .padding(.top, 8)
-                } else {
+                if entry.isSyncedToKnowledge {
                     HStack {
                         Image(systemName: "checkmark.circle.fill")
                             .foregroundColor(.green)
@@ -221,6 +211,25 @@ struct VnoteRecorderView: View {
                     }
                     .font(.subheadline)
                     .frame(maxWidth: .infinity)
+                    .padding(.top, 8)
+                } else if !entry.transcription.isEmpty || !entry.aiContent.isEmpty {
+                    // 有内容才显示沉淀按钮
+                    Button {
+                        if subscriptionManager.isPremium {
+                            saveToKnowledge(entry)
+                        } else {
+                            showPremiumPaywall = true
+                        }
+                    } label: {
+                        HStack {
+                            Image(systemName: "brain.head.profile")
+                            Text(subscriptionManager.isPremium ? "沉淀到知识库" : "🔒 沉淀到知识库")
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .foregroundColor(.white)
+                        .background(Capsule().fill(Color.primary))
+                    }
                     .padding(.top, 8)
                 }
             }

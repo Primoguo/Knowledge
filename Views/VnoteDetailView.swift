@@ -8,11 +8,13 @@ struct VnoteDetailView: View {
     let entry: VnoteEntry
 
     @Environment(\.modelContext) private var modelContext
+    @ObservedObject private var subscriptionManager = SubscriptionManager.shared
     @State private var audioPlayer: AVAudioPlayer?
     @State private var isPlaying = false
     @State private var currentTime: TimeInterval = 0
     @State private var playbackTimer: Timer?
     @State private var highlightedWordIndex: Int = -1
+    @State private var showPaywall = false
 
     var body: some View {
         ScrollView {
@@ -215,6 +217,11 @@ struct VnoteDetailView: View {
 
     // MARK: - 知识库沉淀
 
+    /// 是否有可沉淀的内容
+    private var hasDepositableContent: Bool {
+        !entry.transcription.isEmpty || !entry.aiContent.isEmpty
+    }
+
     private var knowledgeSyncSection: some View {
         Group {
             if entry.isSyncedToKnowledge {
@@ -226,13 +233,18 @@ struct VnoteDetailView: View {
                 }
                 .font(.subheadline)
                 .frame(maxWidth: .infinity)
-            } else {
+            } else if hasDepositableContent {
+                // 有内容才显示沉淀按钮
                 Button {
-                    saveToKnowledge()
+                    if subscriptionManager.isPremium {
+                        saveToKnowledge()
+                    } else {
+                        showPaywall = true
+                    }
                 } label: {
                     HStack {
                         Image(systemName: "brain.head.profile")
-                        Text("沉淀到知识库")
+                        Text(subscriptionManager.isPremium ? "沉淀到知识库" : "🔒 沉淀到知识库")
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 12)
@@ -240,6 +252,10 @@ struct VnoteDetailView: View {
                     .background(Capsule().fill(Color.primary))
                 }
             }
+            // 没有内容时不显示任何沉淀相关 UI
+        }
+        .sheet(isPresented: $showPaywall) {
+            PaywallView()
         }
     }
 
