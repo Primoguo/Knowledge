@@ -3,11 +3,11 @@ schema_version: 1
 locale: zh-CN
 branch: main
 nodes_managed: true
-exported_at: "2026-07-16T16:34:27Z"
+exported_at: "2026-07-16T17:03:40Z"
 modules:
     "":
-        dir_name: 荔枝伴读 iOS 应用
-        title: 荔枝伴读 iOS 应用
+        dir_name: 荔枝伴读 iOS 应用（SwiftUI + SwiftData）
+        title: 荔枝伴读 iOS 应用（SwiftUI + SwiftData）
         scope: []
         source_files: []
         children:
@@ -15,8 +15,8 @@ modules:
         depends_on: []
         related_to: []
     knowledge:
-        dir_name: 知识库与 AI 对话模块
-        title: 知识库与 AI 对话模块
+        dir_name: 知识库沉淀与 AI 对话模块
+        title: 知识库沉淀与 AI 对话模块
         scope:
             - Models/KnowledgeEntry.swift
             - Models/KnowledgeChat.swift

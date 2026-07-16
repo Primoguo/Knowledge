@@ -14,7 +14,6 @@ struct SettingsView: View {
     @State private var voices: [AVSpeechSynthesisVoice] = []
     @State private var selectedVoice: String? = nil
     @State private var selectedEngine: TTSEngine = .system
-    @State private var showVoiceSelect = false
     @State private var showSystemVoiceSelect = false
     @State private var showEdgeVoiceSelect = false
 
@@ -108,46 +107,41 @@ struct SettingsView: View {
 
                 Section("语音引擎") {
                     ForEach(TTSEngine.allCases.filter { $0.isSupported }, id: \.self) { engine in
-                        // Knowledge Voice 标记为即将推出
-                        if engine == .knowledgeVoice {
-                            comingSoonEngineRow(engine: engine)
-                        } else {
-                            Button(action: {
-                                selectedEngine = engine
-                                speakerVM.switchEngine(to: engine)
-                            }) {
-                                HStack {
-                                    VStack(alignment: .leading) {
-                                        Text(engine.displayName)
-                                        Text(engine.description)
-                                            .font(.caption)
-                                            .foregroundColor(.secondary)
-                                    }
-                                    Spacer()
-                                    if selectedEngine == engine {
-                                        Image(systemName: "checkmark")
-                                            .foregroundColor(.accentColor)
-                                    }
-                                    // Edge TTS 标注“免费”
-                                    if engine == .edgeTTS {
-                                        Text("免费")
-                                            .font(.caption2)
-                                            .padding(.horizontal, 6)
-                                            .padding(.vertical, 2)
-                                            .background(Color.green.opacity(0.15))
-                                            .cornerRadius(4)
-                                            .foregroundColor(.green)
-                                    }
-                                    // Apple Neural TTS 标注“推荐”
-                                    if engine == .system {
-                                        Text("推荐")
-                                            .font(.caption2)
-                                            .padding(.horizontal, 6)
-                                            .padding(.vertical, 2)
-                                            .background(Color.accentColor.opacity(0.15))
-                                            .cornerRadius(4)
-                                            .foregroundColor(.accentColor)
-                                    }
+                        Button(action: {
+                            selectedEngine = engine
+                            speakerVM.switchEngine(to: engine)
+                        }) {
+                            HStack {
+                                VStack(alignment: .leading) {
+                                    Text(engine.displayName)
+                                    Text(engine.description)
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+                                Spacer()
+                                if selectedEngine == engine {
+                                    Image(systemName: "checkmark")
+                                        .foregroundColor(.accentColor)
+                                }
+                                // Edge TTS 标注“免费”
+                                if engine == .edgeTTS {
+                                    Text("免费")
+                                        .font(.caption2)
+                                        .padding(.horizontal, 6)
+                                        .padding(.vertical, 2)
+                                        .background(Color.green.opacity(0.15))
+                                        .cornerRadius(4)
+                                        .foregroundColor(.green)
+                                }
+                                // Apple Neural TTS 标注“推荐”
+                                if engine == .system {
+                                    Text("推荐")
+                                        .font(.caption2)
+                                        .padding(.horizontal, 6)
+                                        .padding(.vertical, 2)
+                                        .background(Color.accentColor.opacity(0.15))
+                                        .cornerRadius(4)
+                                        .foregroundColor(.accentColor)
                                 }
                             }
                         }
@@ -202,25 +196,6 @@ struct SettingsView: View {
                                     Text("系统音色")
                                         .font(.body)
                                     Text("选择 Neural 增强版音色")
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                }
-                                Spacer()
-                                Image(systemName: "chevron.right")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                            }
-                        }
-                    }
-                    
-                    // Knowledge Voice 音色选择入口
-                    if selectedEngine == .knowledgeVoice {
-                        Button(action: { showVoiceSelect = true }) {
-                            HStack {
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text("AI 音色")
-                                        .font(.body)
-                                    Text("选择 CosyVoice 预设或克隆音色")
                                         .font(.caption)
                                         .foregroundColor(.secondary)
                                 }
@@ -330,9 +305,6 @@ struct SettingsView: View {
             .sheet(isPresented: $showPaywall) {
                 PaywallView()
             }
-            .sheet(isPresented: $showVoiceSelect) {
-                VoiceSelectView(speakerVM: speakerVM)
-            }
             .sheet(isPresented: $showSystemVoiceSelect) {
                 SystemVoiceSelectView(speakerVM: speakerVM)
             }
@@ -365,9 +337,7 @@ struct SettingsView: View {
             volume: Float(volume),
             language: selectedLang,
             voiceIdentifier: selectedVoice,
-            engine: selectedEngine,
-            clonedVoiceId: selectedEngine == .knowledgeVoice ? VoiceStore.loadSelectedClone() : nil,
-            presetVoiceId: selectedEngine == .knowledgeVoice ? VoiceStore.loadSelectedPreset() : nil
+            engine: selectedEngine
         )
         speakerVM.voiceConfig = config
         saveConfig()
@@ -383,46 +353,12 @@ struct SettingsView: View {
             volume: Float(volume),
             language: selectedLang,
             voiceIdentifier: selectedVoice,
-            engine: selectedEngine,
-            clonedVoiceId: selectedEngine == .knowledgeVoice ? VoiceStore.loadSelectedClone() : nil,
-            presetVoiceId: selectedEngine == .knowledgeVoice ? VoiceStore.loadSelectedPreset() : nil
+            engine: selectedEngine
         )
         if let data = try? JSONEncoder().encode(config) {
             UserDefaults.standard.set(data, forKey: "voiceConfig")
         }
     }
     
-    // MARK: - Coming Soon Engine Row
-    
-    @ViewBuilder
-    private func comingSoonEngineRow(engine: TTSEngine) -> some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                HStack(spacing: 6) {
-                    Text(engine.displayName)
-                        .foregroundColor(.primary)
-                    
-                    Text("即将推出")
-                        .font(.caption2)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(Color.orange.opacity(0.15))
-                        .cornerRadius(4)
-                        .foregroundColor(.orange)
-                }
-                
-                Text(engine.description)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-            
-            Spacer()
-            
-            // 禁用状态图标
-            Image(systemName: "lock.fill")
-                .foregroundColor(.gray)
-        }
-        .opacity(0.6)  // 整体半透明效果
-        .disabled(true)  // 禁用点击
-    }
+
 }

@@ -27,7 +27,6 @@ final class SpeakerViewModel: ObservableObject {
 
     // 持有引擎实例
     private let systemSynthesizer = SpeechService()
-    private let cosyVoiceSynthesizer = CosyVoiceSynthesizer()
     private let edgeTTSSynthesizer = EdgeTTSSynthesizer()
 
     // AI 总结状态
@@ -83,8 +82,6 @@ final class SpeakerViewModel: ObservableObject {
             synthesizer = systemSynthesizer
         case .edgeTTS:
             synthesizer = edgeTTSSynthesizer
-        case .knowledgeVoice:
-            synthesizer = cosyVoiceSynthesizer
         }
         voiceConfig.engine = engine
         saveConfig(voiceConfig)
@@ -109,8 +106,6 @@ final class SpeakerViewModel: ObservableObject {
             synthesizer = systemSynthesizer
         case .edgeTTS:
             synthesizer = edgeTTSSynthesizer
-        case .knowledgeVoice:
-            synthesizer = cosyVoiceSynthesizer
         }
         setupBindings()
     }
@@ -407,7 +402,7 @@ final class SpeakerViewModel: ObservableObject {
                 guard let self else { return }
                 print("🔊 TTS 引擎错误: \(error.localizedDescription)")
                 // 云端引擎出错时临时降级到系统 TTS（不保存配置，下次打开仍用用户选择的引擎）
-                if self.voiceConfig.engine == .knowledgeVoice || self.voiceConfig.engine == .edgeTTS {
+                if self.voiceConfig.engine == .edgeTTS {
                     print("⚠️ 临时降级到 Apple Neural TTS（用户引擎选择已保留）")
                     self.synthesizer = self.systemSynthesizer
                     self.setupBindings()

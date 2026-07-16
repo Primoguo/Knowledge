@@ -44,58 +44,6 @@ final class ServerAPIClient {
         return try await post(endpoint: "/companion", body: body, extractContent: true)
     }
 
-    // MARK: - CosyVoice TTS
-
-    /// 请求 CosyVoice 语音合成
-    func requestTTS(text: String, voiceId: String, rate: Float) async throws -> Data {
-        let body: [String: Any] = [
-            "text": text,
-            "voice_id": voiceId,
-            "rate": rate
-        ]
-
-        var request = buildRequest(endpoint: "/tts", body: body)
-        request.timeoutInterval = 30
-
-        let (data, response) = try await session.data(for: request)
-
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw ServerAPIError.invalidResponse
-        }
-
-        try validateResponse(httpResponse, data: data)
-
-        // TTS 返回音频数据（binary）
-        if let contentType = httpResponse.value(forHTTPHeaderField: "Content-Type"),
-           contentType.contains("audio") {
-            return data
-        }
-
-        // 也可能返回 JSON 中包含音频 URL 或 base64
-        if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
-            if let audioURL = json["audio_url"] as? String,
-               let url = URL(string: audioURL) {
-                let (audioData, _) = try await URLSession.shared.data(from: url)
-                return audioData
-            }
-            if let audioBase64 = json["audio"] as? String,
-               let audioData = Data(base64Encoded: audioBase64) {
-                return audioData
-            }
-        }
-
-        throw ServerAPIError.noAudioData
-    }
-
-    /// 请求语音克隆
-    func requestVoiceClone(audioData: Data, voiceName: String) async throws -> String {
-        let body: [String: Any] = [
-            "audio": audioData.base64EncodedString(),
-            "voice_name": voiceName
-        ]
-        return try await post(endpoint: "/voice-clone", body: body, extractField: "voice_id")
-    }
-
     // MARK: - Private Helpers
 
     private func buildRequest(endpoint: String, body: [String: Any]) -> URLRequest {
@@ -184,7 +132,6 @@ enum ServerAPIError: LocalizedError {
     case invalidResponse
     case unauthorized
     case quotaExceeded
-    case noAudioData
     case serverError(statusCode: Int, message: String)
     case networkError(Error)
 
@@ -196,8 +143,6 @@ enum ServerAPIError: LocalizedError {
             return "请确认已订阅 Premium"
         case .quotaExceeded:
             return "本月使用次数已达上限，请升级套餐或下月再试"
-        case .noAudioData:
-            return "未获取到音频数据"
         case .serverError(let code, let msg):
             return "服务异常（\(code)），请稍后重试"
         case .networkError(let error):
