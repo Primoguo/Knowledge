@@ -40,8 +40,11 @@ struct PaywallView: View {
                     VStack(alignment: .leading, spacing: 14) {
                         featureRow(icon: "sparkles", title: "AI 智能总结", desc: "一键生成文档摘要和关键要点")
                         featureRow(icon: "bubble.left.and.bubble.right", title: "AI 伴读", desc: "边听边问，AI 实时解答")
+                        featureRow(icon: "mic.fill", title: "Vnote 精准转写", desc: "云端语音识别，字级时间戳高亮回放")
+                        featureRow(icon: "tray.fill", title: "Vnote AI 分类", desc: "自动归类为会议纪要、创意速记、To-do")
+                        featureRow(icon: "brain.head.profile", title: "知识库 + AI 对话", desc: "沉淀内容，随时向 AI 提问")
                         featureRow(icon: "waveform", title: "AI 高品质音色", desc: "CosyVoice 自然语音合成")
-                        featureRow(icon: "mic.fill", title: "语音克隆", desc: "用自己的声音朗读文档")
+                        featureRow(icon: "mic.badge.xmark", title: "语音克隆", desc: "用自己的声音朗读文档")
                     }
                     .padding(.horizontal, 24)
 

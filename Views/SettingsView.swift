@@ -85,7 +85,7 @@ struct SettingsView: View {
                                     Text("解锁 Premium")
                                         .fontWeight(.semibold)
                                         .foregroundColor(.primary)
-                                    Text("AI 总结、AI 伴读、高品质音色")
+                                    Text("AI 总结、伴读、Vnote 转写分类、知识库")
                                         .font(.caption)
                                         .foregroundColor(.secondary)
                                 }
