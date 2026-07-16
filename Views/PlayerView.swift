@@ -315,19 +315,26 @@ struct PlayerView: View {
     /// 为单个段落生成高亮 AttributedString
     private func highlightedParagraph(_ para: ParagraphInfo, globalOffset: Int) -> AttributedString {
         var attributed = AttributedString(para.text)
+        // 默认文字样式：已读/未读保持普通
         attributed.foregroundColor = .primary
+        attributed.font = .system(size: 17, design: .serif)
 
         let range = speakerVM.highlightRange
         let paraEnd = globalOffset + (para.text as NSString).length
 
-        // 检查高亮范围是否与当前段落有交集
-        if range.location >= 0, range.length > 0,
-           range.location < paraEnd,
-           range.location + range.length > globalOffset {
+        // 当前朗读位置（字符偏移）
+        let readPos = range.location
+        guard readPos >= 0 else { return attributed }
 
-            // 计算段落内的局部高亮范围
-            let localStart = max(0, range.location - globalOffset)
-            let localEnd = min((para.text as NSString).length, range.location + range.length - globalOffset)
+        // 只高亮当前正在朗读的 ~12 个字符（蓝色）
+        let highlightLen = 12
+        let hlStart = readPos
+        let hlEnd = readPos + highlightLen
+
+        // 检查高亮窗口是否与当前段落有交集
+        if hlStart < paraEnd, hlEnd > globalOffset {
+            let localStart = max(0, hlStart - globalOffset)
+            let localEnd = min((para.text as NSString).length, hlEnd - globalOffset)
             let localLength = localEnd - localStart
 
             if localLength > 0 {
@@ -336,9 +343,8 @@ struct PlayerView: View {
                     let lower = AttributedString.Index(stringRange.lowerBound, within: attributed)
                     let upper = AttributedString.Index(stringRange.upperBound, within: attributed)
                     if let lower, let upper {
-                        attributed[lower..<upper].foregroundColor = .primary
-                        attributed[lower..<upper].font = .system(size: 17, weight: .semibold, design: .serif)
-                        attributed[lower..<upper].backgroundColor = Color.accentColor.opacity(0.08)
+                        attributed[lower..<upper].foregroundColor = .blue
+                        attributed[lower..<upper].font = .system(size: 17, weight: .bold, design: .serif)
                     }
                 }
             }
