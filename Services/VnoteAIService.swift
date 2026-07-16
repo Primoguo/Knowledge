@@ -26,7 +26,7 @@ final class VnoteAIService {
        - meeting（会议纪要）：会议讨论、工作沟通、头脑风暴会议
        - creative（创意速记）：灵感、创意想法、个人思考
        - todo（To-do List）：待办事项、任务安排、行动计划
-       - general（知识笔记）：学习笔记、知识整理、其他
+       - general（Box 收件箱）：无法明确归类的内容，放入收件箱
 
     2. 生成一个简短标题（10字以内）
 

@@ -30,14 +30,14 @@ enum KnowledgeCategory: String, Codable, CaseIterable {
     case meeting    // 会议纪要
     case creative   // 创意速记
     case todo       // To-do List
-    case general    // 通用知识
+    case general    // Box（收件箱，未分类）
 
     var displayName: String {
         switch self {
         case .meeting:  return "会议纪要"
         case .creative: return "创意速记"
         case .todo:     return "To-do"
-        case .general:  return "知识笔记"
+        case .general:  return "Box"
         }
     }
 
@@ -46,7 +46,7 @@ enum KnowledgeCategory: String, Codable, CaseIterable {
         case .meeting:  return "person.2.fill"
         case .creative: return "lightbulb.fill"
         case .todo:     return "checklist"
-        case .general:  return "book.fill"
+        case .general:  return "tray.fill"
         }
     }
 
