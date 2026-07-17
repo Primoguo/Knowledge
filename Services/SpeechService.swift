@@ -1,6 +1,10 @@
 // Knowledge/Services/SpeechService.swift
 import Foundation
 import AVFoundation
+import ObjectiveC
+
+/// 用于给 AVSpeechUtterance 绑定 generation tag 的关联对象 key
+private var utteranceGenerationKey: UInt8 = 0
 
 final class SpeechService: NSObject, SpeechSynthesizerProtocol, AVSpeechSynthesizerDelegate {
 
@@ -59,6 +63,8 @@ final class SpeechService: NSObject, SpeechSynthesizerProtocol, AVSpeechSynthesi
         let chunk = nsText.substring(with: currentRange)
 
         let utterance = AVSpeechUtterance(string: chunk)
+        // 给 utterance 打上当前 generation tag
+        objc_setAssociatedObject(utterance, &utteranceGenerationKey, thisGeneration, .OBJC_ASSOCIATION_RETAIN)
         utterance.rate = config.rate
         utterance.pitchMultiplier = config.pitchMultiplier
         utterance.volume = config.volume
@@ -138,14 +144,15 @@ final class SpeechService: NSObject, SpeechSynthesizerProtocol, AVSpeechSynthesi
     // MARK: - AVSpeechSynthesizerDelegate
 
     func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
-        // 只响应最新一代 speak 的回调，防止 seek 后旧 utterance 触发续播
-        let gen = self.speakGeneration
+        // 从 utterance 上读取绑定的 generation tag
+        let utteranceGen = (objc_getAssociatedObject(utterance, &utteranceGenerationKey) as? UInt64) ?? 0
         let nextPosition = currentRange.location + currentRange.length
         let nsText = fullText as NSString
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
-            guard gen == self.speakGeneration else {
-                print("🔇 didFinish: stale generation, ignoring")
+            // 只有当前 generation 匹配时才续播
+            guard utteranceGen == self.speakGeneration else {
+                print("🔇 didFinish: utterance gen \(utteranceGen) != current \(self.speakGeneration), ignoring")
                 return
             }
             if nextPosition >= nsText.length {
