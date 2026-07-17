@@ -100,7 +100,7 @@ struct VnoteListView: View {
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
-            .foregroundColor(isSelected ? .white : .primary)
+            .foregroundColor(isSelected ? Color(.systemBackground) : .primary)
             .background(
                 Capsule()
                     .fill(isSelected ? Color.primary : Color.secondary.opacity(0.08))

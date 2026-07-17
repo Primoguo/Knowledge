@@ -248,7 +248,7 @@ struct VnoteDetailView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 12)
-                    .foregroundColor(.white)
+                    .foregroundColor(Color(.systemBackground))
                     .background(Capsule().fill(Color.primary))
                 }
             }
