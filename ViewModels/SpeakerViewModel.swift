@@ -235,7 +235,15 @@ final class SpeakerViewModel: ObservableObject {
         updateProgress(target)
         synthesizer.stop()
         if wasActive {
-            self.synthesizer.speak(text: doc.extractedText, from: target, config: self.voiceConfig)
+            // 延迟 50ms 等待 stop 完全生效，避免 AVSpeechSynthesizer 竞态
+            let seekTarget = target
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
+                guard let self else { return }
+                // 二次确认位置没被旧回调覆盖
+                self.currentPosition = seekTarget
+                self.updateProgress(seekTarget)
+                self.synthesizer.speak(text: doc.extractedText, from: seekTarget, config: self.voiceConfig)
+            }
         } else {
             savePosition()
         }
