@@ -316,23 +316,37 @@ struct PlayerView: View {
     /// 为单个段落生成高亮 AttributedString
     private func highlightedParagraph(_ para: ParagraphInfo, globalOffset: Int) -> AttributedString {
         var attributed = AttributedString(para.text)
-        // 默认文字样式：已读/未读保持普通
+        // 默认文字样式
         attributed.foregroundColor = .primary
         attributed.font = .system(size: 17, design: .serif)
 
-        let range = speakerVM.highlightRange
-        let paraEnd = globalOffset + (para.text as NSString).length
-
-        // 当前朗读位置（字符偏移）
-        let readPos = range.location
+        let readPos = speakerVM.highlightRange.location
         guard readPos >= 0 else { return attributed }
 
-        // 只高亮当前正在朗读的 ~12 个字符（蓝色）
-        let highlightLen = 12
-        let hlStart = readPos
-        let hlEnd = readPos + highlightLen
+        let paraEnd = globalOffset + (para.text as NSString).length
 
-        // 检查高亮窗口是否与当前段落有交集
+        // 已读过的部分：降低透明度，与当前朗读位置形成阅读进度感
+        if readPos > globalOffset {
+            let readLocalEnd = min((para.text as NSString).length, readPos - globalOffset)
+            if readLocalEnd > 0 {
+                let nsRange = NSRange(location: 0, length: readLocalEnd)
+                if let stringRange = Range(nsRange, in: para.text) {
+                    let lower = AttributedString.Index(stringRange.lowerBound, within: attributed)
+                    let upper = AttributedString.Index(stringRange.upperBound, within: attributed)
+                    if let lower, let upper {
+                        attributed[lower..<upper].foregroundColor = .secondary
+                    }
+                }
+            }
+        }
+
+        // 当前正在朗读的词语：蓝色高亮
+        // 使用引擎报告的实际范围，但限制最大长度避免整段涂蓝
+        let engineRange = speakerVM.highlightRange
+        let hlStart = engineRange.location
+        let hlLen = min(engineRange.length, 30)  // 最多高亮 30 字符（约一句短语）
+        let hlEnd = hlStart + max(hlLen, 1)  // 至少 1 字符
+
         if hlStart < paraEnd, hlEnd > globalOffset {
             let localStart = max(0, hlStart - globalOffset)
             let localEnd = min((para.text as NSString).length, hlEnd - globalOffset)
