@@ -53,6 +53,10 @@ final class SpeakerViewModel: ObservableObject {
     private var highlightDebounceTimer: Timer?
     /// 状态轮询定时器（单独管理，避免 setupBindings 重复创建）
     private var statePollingCancellable: AnyCancellable?
+    /// Seek 防护：阻止旧回调覆盖 seek 目标位置
+    private var isSeeking = false
+    /// Seek 去抖定时器（拖拽期间合并多次 seekTo 调用）
+    private var seekDebounceTimer: Timer?
 
     // MARK: - Init
 
@@ -230,21 +234,35 @@ final class SpeakerViewModel: ObservableObject {
         let target = Int(Double(doc.totalLength) * progress)
         let wasActive = (state == .playing || state == .paused)
         print("🎯 seekTo: progress=\(String(format: "%.2f", progress)), target=\(target), wasActive=\(wasActive), state=\(state), engine=\(voiceConfig.engine.displayName)")
-        // 先更新位置，再 stop/speak，避免旧回调覆盖新位置
+
+        // 标记 seek 中，阻止旧回调覆盖位置
+        isSeeking = true
+
+        // 立即更新 UI（进度条 + 位置文字），消除拖拽释放后的视觉跳回
         currentPosition = target
         updateProgress(target)
+
+        // 停止当前播放
         synthesizer.stop()
+
+        // 去抖：拖拽期间多次 seekTo 只执行最后一次
+        seekDebounceTimer?.invalidate()
+
         if wasActive {
-            // 延迟 50ms 等待 stop 完全生效，避免 AVSpeechSynthesizer 竞态
             let seekTarget = target
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
+            seekDebounceTimer = Timer.scheduledTimer(withTimeInterval: 0.08, repeats: false) { [weak self] _ in
                 guard let self else { return }
-                // 二次确认位置没被旧回调覆盖
+                // 恢复目标位置（防止中间回调篡改）
                 self.currentPosition = seekTarget
                 self.updateProgress(seekTarget)
                 self.synthesizer.speak(text: doc.extractedText, from: seekTarget, config: self.voiceConfig)
+                // 延迟解除 seek 标记，等新 utterance 的 willSpeakRange 稳定后
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                    self.isSeeking = false
+                }
             }
         } else {
+            isSeeking = false
             savePosition()
         }
     }
@@ -391,6 +409,11 @@ final class SpeakerViewModel: ObservableObject {
         synthesizer.onPositionChange = { [weak self] pos in
             Task { @MainActor in
                 guard let self else { return }
+                // seek 期间忽略旧回调的位置更新，防止进度条跳回
+                guard !self.isSeeking else {
+                    print("🔇 onPositionChange: blocked by seek (pos=\(pos))")
+                    return
+                }
                 self.currentPosition = pos
                 self.updateProgress(pos)
                 self.updateNowPlaying()
