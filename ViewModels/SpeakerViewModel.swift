@@ -53,9 +53,10 @@ final class SpeakerViewModel: ObservableObject {
     private var highlightDebounceTimer: Timer?
     /// 状态轮询定时器（单独管理，避免 setupBindings 重复创建）
     private var statePollingCancellable: AnyCancellable?
-    /// Seek 防护：期望的 speak generation
-    /// nil = 正常播放（接受所有回调），非 nil = 只接受匹配 generation 的回调
-    private var expectedGeneration: UInt64? = nil
+    /// Seek 防护：guard generation
+    /// 非 nil 时，拒绝 generation < guard 的回调（来自 seek 前的旧 utterance）
+    /// 第一个 >= guard 的回调到达后自动清除
+    private var seekGuardGeneration: UInt64? = nil
     /// Seek 去抖定时器（拖拽期间合并多次 seekTo 调用）
     private var seekDebounceTimer: Timer?
 
@@ -236,8 +237,10 @@ final class SpeakerViewModel: ObservableObject {
         let wasActive = (state == .playing || state == .paused)
         print("🎯 seekTo: progress=\(String(format: "%.2f", progress)), target=\(target), wasActive=\(wasActive), state=\(state), engine=\(voiceConfig.engine.displayName)")
 
-        // 标记 seek 防护：在 speak 开始前不接受任何回调
-        expectedGeneration = UInt64.max
+        // 记录 guard generation：seek 开始时的 speakGeneration
+        // 之后所有 generation < 此值的回调都是旧 utterance，将被拒绝
+        let guardGen = synthesizer.speakGeneration
+        seekGuardGeneration = guardGen
 
         // 立即更新 UI（进度条 + 位置文字），消除拖拽释放后的视觉跳回
         currentPosition = target
@@ -258,11 +261,10 @@ final class SpeakerViewModel: ObservableObject {
                 self.updateProgress(seekTarget)
                 // speak 会递增 speakGeneration，之后的回调携带新 generation
                 self.synthesizer.speak(text: doc.extractedText, from: seekTarget, config: self.voiceConfig)
-                // 记录期望的 generation（speak 后的当前值）
-                self.expectedGeneration = self.synthesizer.speakGeneration
+                // speak 后的 generation 一定 > guardGen，其回调会通过检查
             }
         } else {
-            expectedGeneration = synthesizer.speakGeneration
+            seekGuardGeneration = nil
             savePosition()
         }
     }
@@ -411,14 +413,13 @@ final class SpeakerViewModel: ObservableObject {
             let capturedGen = generation
             Task { @MainActor in
                 guard let self else { return }
-                // Generation 检查：
-                // - expectedGeneration == nil: 正常播放，接受所有回调
-                // - expectedGeneration == UInt64.max: seek 后 speak 尚未开始，拒绝所有
-                // - 其他值: 只接受匹配的 generation
-                if let expected = self.expectedGeneration {
-                    guard capturedGen == expected else { return }
-                    // 第一个有效回调到达后，解除过滤（正常 chunk 切换不受影响）
-                    self.expectedGeneration = nil
+                // Generation 防护：
+                // - seekGuardGeneration == nil: 正常播放，接受所有回调
+                // - 非 nil: 拒绝 generation < guard 的旧回调
+                //   第一个 >= guard 的回调到达后自动解除防护
+                if let guardGen = self.seekGuardGeneration {
+                    guard capturedGen >= guardGen else { return }
+                    self.seekGuardGeneration = nil
                 }
                 self.currentPosition = pos
                 self.updateProgress(pos)
