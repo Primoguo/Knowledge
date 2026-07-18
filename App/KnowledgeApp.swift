@@ -9,7 +9,11 @@ struct KnowledgeApp: App {
 
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([Document.self, CompanionChat.self, KnowledgeEntry.self, KnowledgeChat.self, VnoteEntry.self])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+        let modelConfiguration = ModelConfiguration(
+            schema: schema,
+            isStoredInMemoryOnly: false,
+            cloudKitDatabase: .private("iCloud.com.knowledge.app")
+        )
         do {
             return try ModelContainer(for: schema, configurations: [modelConfiguration])
         } catch {

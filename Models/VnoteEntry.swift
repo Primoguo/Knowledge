@@ -5,18 +5,19 @@ import SwiftData
 /// Vnote 语音速记条目（SwiftData 持久化）
 @Model
 final class VnoteEntry {
-    var id: UUID
-    var title: String
-    var transcription: String          // 完整转写文本
-    var sentencesData: Data            // [VnoteSentence] JSON 编码（含时间戳）
-    var aiContent: String              // AI 分类生成内容（纪要/to-do/创意速记）
-    var categoryRaw: String            // AI 分类结果
-    var audioFileName: String          // 录音文件名（存在 Documents 目录）
-    var audioDuration: TimeInterval    // 录音时长（秒）
-    var isPremiumSTT: Bool             // 是否使用 Premium STT（有时间戳）
-    var isSyncedToKnowledge: Bool      // 是否已沉淀到知识库
-    var createdAt: Date
-    var updatedAt: Date
+    var id: UUID = UUID()
+    var title: String = ""
+    var transcription: String = ""
+    /// 句子时间戳数据（可能很大，CloudKit 同步时用外部存储）
+    @Attribute(.externalStorage) var sentencesData: Data = Data()
+    var aiContent: String = ""
+    var categoryRaw: String = ""
+    var audioFileName: String = ""
+    var audioDuration: TimeInterval = 0
+    var isPremiumSTT: Bool = false
+    var isSyncedToKnowledge: Bool = false
+    var createdAt: Date = Date()
+    var updatedAt: Date = Date()
 
     // MARK: - 计算属性
 

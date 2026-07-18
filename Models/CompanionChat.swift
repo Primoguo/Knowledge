@@ -20,9 +20,9 @@ struct ChatEntry: Codable, Identifiable {
 /// AI 伴读对话持久化模型（按文档存储）
 @Model
 final class CompanionChat {
-    var documentId: UUID
-    var messagesData: Data          // [ChatEntry] 的 JSON 编码
-    var updatedAt: Date
+    var documentId: UUID = UUID()
+    var messagesData: Data = Data()
+    var updatedAt: Date = Date()
 
     init(documentId: UUID, entries: [ChatEntry] = []) {
         self.documentId = documentId

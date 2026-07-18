@@ -53,15 +53,16 @@ enum DocumentType: String, Codable, CaseIterable {
 
 @Model
 final class Document {
-    var id: UUID
-    var title: String
-    var fileName: String
-    var fileTypeRaw: String          // 持久化存储用
-    var extractedText: String
-    var currentPosition: Int
-    var lastOpenedDate: Date
-    var createdAt: Date
-    var isFavorite: Bool
+    var id: UUID = UUID()
+    var title: String = ""
+    var fileName: String = ""
+    var fileTypeRaw: String = ""
+    /// 文档正文（可能很大，CloudKit 同步时用外部存储）
+    @Attribute(.externalStorage) var extractedText: String = ""
+    var currentPosition: Int = 0
+    var lastOpenedDate: Date = Date()
+    var createdAt: Date = Date()
+    var isFavorite: Bool = false
     /// AI 生成的文档摘要
     var summary: String?
     /// 播客音频文件路径（V3.0）

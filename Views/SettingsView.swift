@@ -1,6 +1,7 @@
 // Knowledge/Views/SettingsView.swift
 import SwiftUI
 import AVFoundation
+import StoreKit
 
 struct SettingsView: View {
     @ObservedObject var speakerVM: SpeakerViewModel
@@ -69,6 +70,25 @@ struct SettingsView: View {
                                 .foregroundColor(.green)
                         }
                         .padding(.vertical, 4)
+
+                        Button {
+                            if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
+                                Task { try? await AppStore.showManageSubscriptions(in: scene) }
+                            }
+                        } label: {
+                            HStack {
+                                Image(systemName: "gearshape")
+                                    .foregroundColor(.accentColor)
+                                    .frame(width: 28)
+                                Text("管理订阅")
+                                    .foregroundColor(.primary)
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                        .padding(.vertical, 2)
                     } else {
                         Button(action: { showPaywall = true }) {
                             HStack(spacing: 12) {

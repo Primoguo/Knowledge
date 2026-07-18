@@ -63,14 +63,14 @@ enum KnowledgeCategory: String, Codable, CaseIterable {
 /// 知识库条目（SwiftData 持久化）
 @Model
 final class KnowledgeEntry {
-    var id: UUID
-    var title: String
-    var content: String              // 正文内容
-    var sourceRaw: String            // 来源类型
-    var categoryRaw: String          // AI 分类
-    var sourceDocumentId: UUID?      // 来源文档 ID（摘要沉淀时）
-    var createdAt: Date
-    var updatedAt: Date
+    var id: UUID = UUID()
+    var title: String = ""
+    var content: String = ""
+    var sourceRaw: String = ""
+    var categoryRaw: String = ""
+    var sourceDocumentId: UUID?
+    var createdAt: Date = Date()
+    var updatedAt: Date = Date()
 
     // MARK: - 计算属性
 

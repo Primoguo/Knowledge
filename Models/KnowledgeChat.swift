@@ -5,9 +5,9 @@ import SwiftData
 /// 知识库 AI 对话持久化模型（按知识条目存储）
 @Model
 final class KnowledgeChat {
-    var entryId: UUID
-    var messagesData: Data          // [ChatEntry] 的 JSON 编码
-    var updatedAt: Date
+    var entryId: UUID = UUID()
+    var messagesData: Data = Data()
+    var updatedAt: Date = Date()
 
     init(entryId: UUID, entries: [ChatEntry] = []) {
         self.entryId = entryId
