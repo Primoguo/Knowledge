@@ -22,10 +22,20 @@ final class ServerAPIClient {
 
     // MARK: - AI Summary
 
-    /// 请求 AI 总结
+    /// 请求 AI 总结（单段，最大 10000 字）
     func requestSummary(text: String, systemPrompt: String) async throws -> String {
         let body: [String: Any] = [
-            "text": String(text.prefix(8000)),
+            "text": String(text.prefix(10000)),
+            "systemPrompt": systemPrompt
+        ]
+        return try await post(endpoint: "/summary", body: body, extractContent: true)
+    }
+
+    /// 请求 AI 合并多段摘要为最终总结
+    func requestMergeSummaries(summaries: [String], systemPrompt: String) async throws -> String {
+        let combined = summaries.enumerated().map { "【第\($0.offset + 1)段摘要】\n\($0.element)" }.joined(separator: "\n\n")
+        let body: [String: Any] = [
+            "text": String(combined.prefix(10000)),
             "systemPrompt": systemPrompt
         ]
         return try await post(endpoint: "/summary", body: body, extractContent: true)

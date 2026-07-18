@@ -302,8 +302,12 @@ final class SpeakerViewModel: ObservableObject {
     func generateSummary() {
         guard let doc = currentDocument, !doc.extractedText.isEmpty else { return }
 
-        // 如果已有缓存摘要，直接返回（不消耗免费次数）
-        if let cached = doc.summary, let result = SummaryResult.fromJSON(cached) {
+        // 缓存命中检查：内容 hash 一致则复用摘要（零 API 调用）
+        let currentHash = Self.contentHash(doc.extractedText)
+        if let cached = doc.summary,
+           doc.summaryContentHash == currentHash,
+           let result = SummaryResult.fromJSON(cached) {
+            print("📝 AI 摘要缓存命中（hash: \(String(currentHash.prefix(8)))）")
             summaryResult = result
             return
         }
@@ -317,8 +321,9 @@ final class SpeakerViewModel: ObservableObject {
                 await MainActor.run {
                     summaryResult = result
                     isGeneratingSummary = false
-                    // 缓存到 Document
+                    // 缓存到 Document（摘要 + 内容 hash）
                     doc.summary = result.toJSON()
+                    doc.summaryContentHash = currentHash
                     // 消耗免费试用次数（仅非 Premium 用户）
                     SubscriptionManager.shared.consumeAISummaryTrial()
                 }
@@ -534,5 +539,17 @@ final class SpeakerViewModel: ObservableObject {
         }
         print("📂 加载配置: engine=\(c.engine.displayName), voice=\(c.edgeVoiceId ?? c.voiceIdentifier ?? "nil")")
         return c
+    }
+
+    // MARK: - Content Hash
+
+    /// 计算文本内容 hash（取前 10000 字，用于摘要缓存判断）
+    private static func contentHash(_ text: String) -> String {
+        let sample = String(text.prefix(10000))
+        var hash = UInt64(0)
+        for char in sample.unicodeScalars {
+            hash = hash &* 31 &+ UInt64(char.value)
+        }
+        return String(hash, radix: 16)
     }
 }

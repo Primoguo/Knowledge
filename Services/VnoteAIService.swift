@@ -41,17 +41,28 @@ final class VnoteAIService {
     """
 
     // MARK: - 执行分类
-
+    
     func classify(text: String) async throws -> ClassificationResult {
         guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             return ClassificationResult(category: .general, title: "语音速记", content: text)
         }
-
+    
+        // 短文本（<200字）走本地关键词分类，零延迟零成本
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.count < 200 {
+            let localResult = localClassify(text: trimmed)
+            if let result = localResult {
+                print("🏷️ Vnote 本地分类命中：\(result.category.rawValue)（\(trimmed.count)字）")
+                return result
+            }
+        }
+    
+        // 长文本或本地无法判断时走 AI 分类
         let body: [String: Any] = [
             "text": "\(Self.classificationPrompt)\n\n---\n\n以下是用户的语音转写内容：\n\n\(String(text.prefix(6000)))",
             "systemPrompt": "你是一个专业的语音速记整理助手，严格按照 JSON 格式返回结果。"
         ]
-
+    
         // 使用 /companion 端点（通用 AI 对话接口）
         let result = try await apiClient.requestCompanion(
             question: text,
@@ -59,8 +70,61 @@ final class VnoteAIService {
             history: [],
             systemPrompt: "你是一个专业的语音速记整理助手，严格按照 JSON 格式返回结果。"
         )
-
+    
         return parseClassificationResult(result, fallbackText: text)
+    }
+    
+    // MARK: - 本地关键词分类
+    
+    /// 短文本本地关键词分类（<200字，零成本）
+    /// 优先级：todo > meeting > creative > general
+    private func localClassify(text: String) -> ClassificationResult? {
+        let lower = text.lowercased()
+    
+        // To-do：待办/任务/提醒类
+        let todoKeywords = ["待办", "要做", "记得", "别忘了", "提醒", "任务", "todo", "要做的事", "需要完成"]
+        if todoKeywords.contains(where: { lower.contains($0) }) {
+            return ClassificationResult(
+                category: .todo,
+                title: localTitle(from: text, fallback: "待办事项"),
+                content: "✅ \(text.trimmingCharacters(in: .whitespacesAndNewlines))"
+            )
+        }
+    
+        // Meeting：会议/讨论/沟通类
+        let meetingKeywords = ["会议", "讨论", "沟通", "对齐", "评审", "开会", "会议记录", "会议纪要", "周会", "日会", "站会", "复盘"]
+        if meetingKeywords.contains(where: { lower.contains($0) }) {
+            return ClassificationResult(
+                category: .meeting,
+                title: localTitle(from: text, fallback: "会议记录"),
+                content: "【讨论要点】\n\(text.trimmingCharacters(in: .whitespacesAndNewlines))"
+            )
+        }
+    
+        // Creative：灵感/创意/想法类
+        let creativeKeywords = ["想法", "灵感", "创意", "突然想到", "点子", "构思", "思考", "反思", "感悟", "脑洞"]
+        if creativeKeywords.contains(where: { lower.contains($0) }) {
+            return ClassificationResult(
+                category: .creative,
+                title: localTitle(from: text, fallback: "灵感速记"),
+                content: "【核心想法】\n\(text.trimmingCharacters(in: .whitespacesAndNewlines))"
+            )
+        }
+    
+        // 无法判断 → 返回 nil，交给 AI 处理
+        return nil
+    }
+    
+    /// 从短文本中提取标题（取前 10 个非空字符）
+    private func localTitle(from text: String, fallback: String) -> String {
+        let firstLine = text.components(separatedBy: .newlines).first ?? ""
+        let trimmed = firstLine.trimmingCharacters(in: .whitespaces)
+        if trimmed.count >= 4 && trimmed.count <= 10 {
+            return trimmed
+        } else if trimmed.count > 10 {
+            return String(trimmed.prefix(10))
+        }
+        return fallback
     }
 
     // MARK: - 解析 AI 返回

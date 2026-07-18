@@ -66,12 +66,74 @@ final class AISummaryService {
     - 直接以【一句话总结】开头输出
     """
 
+    /// 合并提示词（用于将多段摘要合并为最终结构化总结）
+    static let mergePrompt = """
+    你是一名 AI 信息整合专家。
+
+    以下是一篇长文档分段摘要的结果，请将它们合并为一篇完整的结构化总结。
+
+    ## 要求
+    - 去除各段之间的重复信息
+    - 保持逻辑连贯，按 背景→问题→分析→方案→结论 组织
+    - 保留所有关键数据、数字、人名、日期
+    - 输出格式与标准总结一致（一句话总结、三句话总结、核心内容、要点、行动建议、风险）
+    - 不要提及“分段”或“摘要合并”等字眼，直接输出最终总结
+    - 不要添加“好的”“以下是”等前缀，直接以【一句话总结】开头
+    - 不要使用 Markdown 格式，使用纯文本
+    """
+
     // MARK: - Public API
 
-    /// 生成文档摘要
+    /// 生成文档摘要（长度自适应：≤1万字全文，>1万字分段摘要+合并）
     func generateSummary(for text: String) async throws -> SummaryResult {
-        let response = try await apiClient.requestSummary(text: text, systemPrompt: Self.systemPrompt)
-        return parseSummaryResponse(response)
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if trimmed.count <= 10000 {
+            // 短文档：直接全文摘要
+            let response = try await apiClient.requestSummary(text: trimmed, systemPrompt: Self.systemPrompt)
+            return parseSummaryResponse(response)
+        } else {
+            // 超长文档：分段摘要 + 合并
+            let segments = splitIntoSegments(text: trimmed, maxSegmentLength: 8000, overlap: 500)
+            print("📄 超长文档 \(trimmed.count) 字，分为 \(segments.count) 段摘要")
+
+            var segmentSummaries: [String] = []
+            for (i, segment) in segments.enumerated() {
+                print("📝 摘要第 \(i + 1)/\(segments.count) 段...")
+                let response = try await apiClient.requestSummary(text: segment, systemPrompt: Self.systemPrompt)
+                segmentSummaries.append(response)
+            }
+
+            // 合并所有段摘要
+            print("🔗 合并 \(segmentSummaries.count) 段摘要...")
+            let mergedResponse = try await apiClient.requestMergeSummaries(
+                summaries: segmentSummaries,
+                systemPrompt: Self.mergePrompt
+            )
+            return parseSummaryResponse(mergedResponse)
+        }
+    }
+
+    // MARK: - Segmentation
+
+    /// 将长文本切分为多段，每段最大 maxSegmentLength 字，段间重叠 overlap 字
+    private func splitIntoSegments(text: String, maxSegmentLength: Int, overlap: Int) -> [String] {
+        var segments: [String] = []
+        var start = text.startIndex
+
+        while start < text.endIndex {
+            let remaining = text.distance(from: start, to: text.endIndex)
+            let segLength = min(maxSegmentLength, remaining)
+            let end = text.index(start, offsetBy: segLength)
+            segments.append(String(text[start..<end]))
+
+            if end >= text.endIndex { break }
+            // 下一段从当前位置回退 overlap 字开始
+            let nextStart = text.index(end, offsetBy: -min(overlap, segLength))
+            start = nextStart
+        }
+
+        return segments
     }
 
     // MARK: - Parser

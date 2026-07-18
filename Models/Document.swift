@@ -65,6 +65,8 @@ final class Document {
     var isFavorite: Bool = false
     /// AI 生成的文档摘要
     var summary: String?
+    /// 摘要对应的内容 hash（用于缓存判断：内容未变则复用摘要）
+    var summaryContentHash: String?
     /// 播客音频文件路径（V3.0）
     var podcastAudioPath: String?
 
@@ -98,6 +100,7 @@ final class Document {
         createdAt: Date = Date(),
         isFavorite: Bool = false,
         summary: String? = nil,
+        summaryContentHash: String? = nil,
         podcastAudioPath: String? = nil
     ) {
         self.id = id
@@ -110,6 +113,7 @@ final class Document {
         self.createdAt = createdAt
         self.isFavorite = isFavorite
         self.summary = summary
+        self.summaryContentHash = summaryContentHash
         self.podcastAudioPath = podcastAudioPath
     }
 }
